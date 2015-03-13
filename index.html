@@ -4,7 +4,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete API documentation</title>
-    <meta name="description" content="This file is NOT auto-generated" />
+    <meta name="description" content="Python modules and scripts for working with
+[Concrete](https://github.com/hltcoe/concrete), an HLT d..." />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1055,13 +1056,20 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete</span> module</h1>
-  <p>This file is NOT auto-generated</p>
+  <p>Python modules and scripts for working with
+<a href="https://github.com/hltcoe/concrete">Concrete</a>, an HLT data
+specification defined using <a href="http://thrift.apache.org">Thrift</a>.</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete', this);">Show source &equiv;</a></p>
   <div id="source-concrete" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This file is NOT auto-generated</span>
+    <div class="codehilite"><pre><span class="c"># This file is NOT auto-generated</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Python modules and scripts for working with</span>
+<span class="sd">[Concrete](https://github.com/hltcoe/concrete), an HLT data</span>
+<span class="sd">specification defined using [Thrift](http://thrift.apache.org).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 
 <span class="kn">from</span> <span class="nn">audio.ttypes</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">clustering.ttypes</span> <span class="kn">import</span> <span class="o">*</span>
@@ -1096,19 +1104,22 @@ table {
       <p class="name"><a href="util/index.html">concrete.util</a></p>
       
   
+    <div class="desc"><p>Utility code for working with Concrete</p></div>
 
       </div>
       <div class="item">
       <p class="name"><a href="validate.m.html">concrete.validate</a></p>
       
   
-    <div class="desc"><p>Library to (partially) validate a Concrete Communication</p>
-<p>Current validation checks:
-  - for each constituent parse, do any of the constituent ID's for
-    that parse repeat?
-  - is each dependency and constituent parse a fully connected graph?
-  - is each constituent parse "tree" really a tree?
-  -...</p></div>
+    <div class="desc"><p>Library to validate a Concrete Communication</p>
+<p>Current validation checks:</p>
+<ul>
+<li>for each constituent parse, do any of the constituent ID's for
+    that parse repeat?</li>
+<li>is each dependency and constituent parse a fully connected graph?</li>
+<li>is each constituent parse "tree" really a tree?</li>
+<li>for each d...</li>
+</ul></div>
 
       </div>
   </section>

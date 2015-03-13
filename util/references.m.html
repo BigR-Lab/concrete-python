@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete.util.references API documentation</title>
-    <meta name="description" content="" />
+    <meta name="description" content="Add reference variables for each UUID "pointer" in a Communication" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1056,112 +1056,134 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete.util.references</span> module</h1>
-  
+  <p>Add reference variables for each UUID "pointer" in a Communication</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.references', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.references" class="source">
-    <div class="codehilite"><pre><span class="n">ef</span> <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
-   <span class="sd">&quot;&quot;&quot;Create references for each UUID &#39;pointer&#39;</span>
-<span class="sd">   The Concrete schema uses UUIDs as internal pointers between</span>
-<span class="sd">   Concrete objects.  This function adds member variables to Concrete</span>
-<span class="sd">   objects that are references to the Concrete objects identified by</span>
-<span class="sd">   the UUIDs.</span>
-<span class="sd">   For example, each Entity has a &#39;mentionIdlist&#39; that lists the</span>
-<span class="sd">   UUIDs of the EntityMentions for that Entity.  This function adds a</span>
-<span class="sd">   &#39;mentionList&#39; variable to the Entity that is a list of references</span>
-<span class="sd">   to the actual EntityMention objects.  This allows you to access</span>
-<span class="sd">   the EntityMentions using:</span>
-<span class="sd">     entity.mentionList</span>
-<span class="sd">   This function adds reference variables for:</span>
-<span class="sd">   - a &#39;tokenization&#39; to each TokenRefSequence</span>
-<span class="sd">   - a &#39;entityMention&#39; to each Argument</span>
-<span class="sd">   - a &#39;sentence&#39; backpointer to each Tokenization</span>
-<span class="sd">   - a &#39;parentMention&#39; backpointer to appropriate EntityMention</span>
-<span class="sd">   And adds lists of reference variables for:</span>
-<span class="sd">   - a &#39;mentionList&#39; to each Entity</span>
-<span class="sd">   - a &#39;situationMention&#39; to each Argument</span>
-<span class="sd">   - a &#39;mentionList&#39; to each Situation</span>
-<span class="sd">   - a &#39;childMentionList&#39; to each EntityMention</span>
-<span class="sd">   For variables that represent optional lists of UUIDs</span>
-<span class="sd">   (e.g. situation.mentionIdList), Python Thrift will set the</span>
-<span class="sd">   variable to None if the list is not provided.  When this function</span>
-<span class="sd">   adds a list-of-references variable (in this case,</span>
-<span class="sd">   situation.mentionList) for an *omitted* optional list, it sets the</span>
-<span class="sd">   new variable to None - it DOES NOT leave the variable undefined.</span>
-<span class="sd">   &quot;&quot;&quot;</span>
-    <span class="n">comm</span><span class="o">.</span><span class="n">dependencyParseForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">entityForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">comm</span><span class="o">.</span><span class="n">parseForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">sectionForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">sentenceForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">situationForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">comm</span><span class="o">.</span><span class="n">tokenTaggingForUUID</span> <span class="o">=</span> <span class="p">{}</span>
-   <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span><span class="p">:</span>
-       <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span><span class="p">:</span>
-           <span class="n">comm</span><span class="o">.</span><span class="n">sectionForUUID</span><span class="p">[</span><span class="n">section</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">section</span>
-           <span class="k">if</span> <span class="n">section</span><span class="o">.</span><span class="n">sentenceList</span><span class="p">:</span>
-               <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">section</span><span class="o">.</span><span class="n">sentenceList</span><span class="p">:</span>
-                   <span class="n">comm</span><span class="o">.</span><span class="n">sentenceForUUID</span><span class="p">[</span><span class="n">sentence</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span><span class="o">=</span> <span class="n">sentence</span>
-                   <span class="k">if</span> <span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span><span class="p">:</span>
-                       <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span>
-                       <span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span><span class="o">.</span><span class="n">sentence</span> <span class="o">=</span> <span class="n">sentence</span>
-   <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionSetList</span><span class="p">:</span>
-       <span class="k">for</span> <span class="n">entityMentionSet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionSetList</span><span class="p">:</span>
-           <span class="k">for</span> <span class="n">entityMention</span> <span class="ow">in</span> <span class="n">entityMentionSet</span><span class="o">.</span><span class="n">mentionList</span><span class="p">:</span>
-               <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">entityMention</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">entityMention</span>
-               <span class="k">try</span><span class="p">:</span>
-                   <span class="n">entityMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">entityMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenizationId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
-               <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                   <span class="n">entityMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="bp">None</span>
-               <span class="c"># childMentionList and parentMention are in-memory references, and not part of the Concrete schema</span>
-               <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionList</span> <span class="o">=</span> <span class="p">[]</span>
-               <span class="n">entityMention</span><span class="o">.</span><span class="n">parentMention</span> <span class="o">=</span> <span class="bp">None</span>
-           <span class="k">for</span> <span class="n">entityMention</span> <span class="ow">in</span> <span class="n">entityMentionSet</span><span class="o">.</span><span class="n">mentionList</span><span class="p">:</span>
-               <span class="k">if</span> <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionIdList</span><span class="p">:</span>
-                   <span class="k">for</span> <span class="n">childMentionId</span> <span class="ow">in</span> <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionIdList</span><span class="p">:</span>
-                       <span class="n">childMention</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">childMentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
-                       <span class="n">childMention</span><span class="o">.</span><span class="n">parentMention</span> <span class="o">=</span> <span class="n">entityMention</span>
-                       <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">childMention</span><span class="p">)</span>
-   <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">entitySetList</span><span class="p">:</span>
-       <span class="k">for</span> <span class="n">entitySet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">entitySetList</span><span class="p">:</span>
-           <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entitySet</span><span class="o">.</span><span class="n">entityList</span><span class="p">:</span>
-               <span class="n">comm</span><span class="o">.</span><span class="n">entityForUUID</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity</span>
-               <span class="n">entity</span><span class="o">.</span><span class="n">mentionList</span> <span class="o">=</span> <span class="p">[]</span>
-               <span class="k">for</span> <span class="n">mentionId</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">mentionIdList</span><span class="p">:</span>
-                   <span class="n">entity</span><span class="o">.</span><span class="n">mentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">mentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">])</span>
-   <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionSetList</span><span class="p">:</span>
-       <span class="k">for</span> <span class="n">situationMentionSet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionSetList</span><span class="p">:</span>
-           <span class="k">for</span> <span class="n">situationMention</span> <span class="ow">in</span> <span class="n">situationMentionSet</span><span class="o">.</span><span class="n">mentionList</span><span class="p">:</span>
-               <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span><span class="p">[</span><span class="n">situationMention</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">situationMention</span>
-               <span class="k">for</span> <span class="n">argument</span> <span class="ow">in</span> <span class="n">situationMention</span><span class="o">.</span><span class="n">argumentList</span><span class="p">:</span>
-                   <span class="k">if</span> <span class="n">argument</span><span class="o">.</span><span class="n">entityMentionId</span><span class="p">:</span>
-                       <span class="n">argument</span><span class="o">.</span><span class="n">entityMention</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">argument</span><span class="o">.</span><span class="n">entityMentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
-                   <span class="k">else</span><span class="p">:</span>
-                       <span class="n">argument</span><span class="o">.</span><span class="n">entityMention</span> <span class="o">=</span> <span class="bp">None</span>
-                   <span class="k">if</span> <span class="n">argument</span><span class="o">.</span><span class="n">situationMentionId</span><span class="p">:</span>
-                       <span class="n">argument</span><span class="o">.</span><span class="n">situationMention</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span><span class="p">[</span><span class="n">argument</span><span class="o">.</span><span class="n">situationMentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
-                   <span class="k">else</span><span class="p">:</span>
-                       <span class="n">argument</span><span class="o">.</span><span class="n">situationMention</span> <span class="o">=</span> <span class="bp">None</span>
-                   <span class="k">if</span> <span class="n">argument</span><span class="o">.</span><span class="n">tokens</span><span class="p">:</span>
-                       <span class="n">argument</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">argument</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenizationId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
-               <span class="k">if</span> <span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="p">:</span>
-                   <span class="k">try</span><span class="p">:</span>
-                       <span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenizationId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
-                   <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                       <span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="bp">None</span>
-   <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationSetList</span><span class="p">:</span>
-       <span class="k">for</span> <span class="n">situationSet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationSetList</span><span class="p">:</span>
-           <span class="k">for</span> <span class="n">situation</span> <span class="ow">in</span> <span class="n">situationSet</span><span class="o">.</span><span class="n">situationList</span><span class="p">:</span>
-               <span class="n">comm</span><span class="o">.</span><span class="n">situationForUUID</span><span class="p">[</span><span class="n">situation</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">situation</span>
-               <span class="k">if</span> <span class="n">situation</span><span class="o">.</span><span class="n">mentionIdList</span><span class="p">:</span>
-                   <span class="n">situation</span><span class="o">.</span><span class="n">mentionList</span> <span class="o">=</span> <span class="p">[]</span>
-                   <span class="k">for</span> <span class="n">mentionId</span> <span class="ow">in</span> <span class="n">situation</span><span class="o">.</span><span class="n">mentionIdList</span><span class="p">:</span>
-                       <span class="n">situation</span><span class="o">.</span><span class="n">mentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span><span class="p">[</span><span class="n">mentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">])</span>
-               <span class="k">else</span><span class="p">:</span>
-                   <span class="n">situation</span><span class="o">.</span><span class="n">mentionList</span> <span class="o">=</span> <span class="bp">None</span>
+    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Add reference variables for each UUID &quot;pointer&quot; in a Communication</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="k">def</span> <span class="nf">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create references for each UUID &#39;pointer&#39;</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `comm`: A Concrete Communication object</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    The Concrete schema uses UUIDs as internal pointers between</span>
+<span class="sd">    Concrete objects.  This function adds member variables to Concrete</span>
+<span class="sd">    objects that are references to the Concrete objects identified by</span>
+<span class="sd">    the UUIDs.</span>
+
+<span class="sd">    For example, each Entity has a `mentionIdlist` that lists the</span>
+<span class="sd">    UUIDs of the EntityMentions for that Entity.  This function adds a</span>
+<span class="sd">    `mentionList` variable to the Entity that is a list of references</span>
+<span class="sd">    to the actual EntityMention objects.  This allows you to access</span>
+<span class="sd">    the EntityMentions using:</span>
+
+<span class="sd">        entity.mentionList</span>
+
+<span class="sd">    This function adds these reference variables:</span>
+
+<span class="sd">    - `tokenization` to each TokenRefSequence</span>
+<span class="sd">    - `entityMention` to each Argument</span>
+<span class="sd">    - `sentence` backpointer to each Tokenization</span>
+<span class="sd">    - `parentMention` backpointer to appropriate EntityMention</span>
+
+<span class="sd">    And adds these lists of reference variables:</span>
+
+<span class="sd">    - `mentionList` to each Entity</span>
+<span class="sd">    - `situationMention` to each Argument</span>
+<span class="sd">    - `mentionList` to each Situation</span>
+<span class="sd">    - `childMentionList` to each EntityMention</span>
+
+<span class="sd">    For variables that represent optional lists of UUIDs</span>
+<span class="sd">    (e.g. `situation.mentionIdList`), Python Thrift will set the</span>
+<span class="sd">    variable to `None` if the list is not provided.  When this function</span>
+<span class="sd">    adds a list-of-references variable (in this case,</span>
+<span class="sd">    `situation.mentionList`) for an *omitted* optional list, it sets the</span>
+<span class="sd">    new variable to `None` - it **DOES NOT** leave the variable undefined.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="c">#    comm.dependencyParseForUUID = {}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">entityForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="c">#    comm.parseForUUID = {}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">sectionForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">sentenceForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">situationForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="c">#    comm.tokenTaggingForUUID = {}</span>
+
+    <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span><span class="p">:</span>
+            <span class="n">comm</span><span class="o">.</span><span class="n">sectionForUUID</span><span class="p">[</span><span class="n">section</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">section</span>
+            <span class="k">if</span> <span class="n">section</span><span class="o">.</span><span class="n">sentenceList</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">section</span><span class="o">.</span><span class="n">sentenceList</span><span class="p">:</span>
+                    <span class="n">comm</span><span class="o">.</span><span class="n">sentenceForUUID</span><span class="p">[</span><span class="n">sentence</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span><span class="o">=</span> <span class="n">sentence</span>
+                    <span class="k">if</span> <span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span><span class="p">:</span>
+                        <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span>
+                        <span class="n">sentence</span><span class="o">.</span><span class="n">tokenization</span><span class="o">.</span><span class="n">sentence</span> <span class="o">=</span> <span class="n">sentence</span>
+
+    <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionSetList</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">entityMentionSet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionSetList</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entityMention</span> <span class="ow">in</span> <span class="n">entityMentionSet</span><span class="o">.</span><span class="n">mentionList</span><span class="p">:</span>
+                <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">entityMention</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">entityMention</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">entityMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">entityMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenizationId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="n">entityMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="c"># childMentionList and parentMention are in-memory references, and not part of the Concrete schema</span>
+                <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionList</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">entityMention</span><span class="o">.</span><span class="n">parentMention</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">for</span> <span class="n">entityMention</span> <span class="ow">in</span> <span class="n">entityMentionSet</span><span class="o">.</span><span class="n">mentionList</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionIdList</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">childMentionId</span> <span class="ow">in</span> <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionIdList</span><span class="p">:</span>
+                        <span class="n">childMention</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">childMentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+                        <span class="n">childMention</span><span class="o">.</span><span class="n">parentMention</span> <span class="o">=</span> <span class="n">entityMention</span>
+                        <span class="n">entityMention</span><span class="o">.</span><span class="n">childMentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">childMention</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">entitySetList</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">entitySet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">entitySetList</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entitySet</span><span class="o">.</span><span class="n">entityList</span><span class="p">:</span>
+                <span class="n">comm</span><span class="o">.</span><span class="n">entityForUUID</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">mentionList</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">mentionId</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">mentionIdList</span><span class="p">:</span>
+                    <span class="n">entity</span><span class="o">.</span><span class="n">mentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">mentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionSetList</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">situationMentionSet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionSetList</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">situationMention</span> <span class="ow">in</span> <span class="n">situationMentionSet</span><span class="o">.</span><span class="n">mentionList</span><span class="p">:</span>
+                <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span><span class="p">[</span><span class="n">situationMention</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">situationMention</span>
+                <span class="k">for</span> <span class="n">argument</span> <span class="ow">in</span> <span class="n">situationMention</span><span class="o">.</span><span class="n">argumentList</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">argument</span><span class="o">.</span><span class="n">entityMentionId</span><span class="p">:</span>
+                        <span class="n">argument</span><span class="o">.</span><span class="n">entityMention</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">entityMentionForUUID</span><span class="p">[</span><span class="n">argument</span><span class="o">.</span><span class="n">entityMentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">argument</span><span class="o">.</span><span class="n">entityMention</span> <span class="o">=</span> <span class="bp">None</span>
+                    <span class="k">if</span> <span class="n">argument</span><span class="o">.</span><span class="n">situationMentionId</span><span class="p">:</span>
+                        <span class="n">argument</span><span class="o">.</span><span class="n">situationMention</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span><span class="p">[</span><span class="n">argument</span><span class="o">.</span><span class="n">situationMentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">argument</span><span class="o">.</span><span class="n">situationMention</span> <span class="o">=</span> <span class="bp">None</span>
+                    <span class="k">if</span> <span class="n">argument</span><span class="o">.</span><span class="n">tokens</span><span class="p">:</span>
+                        <span class="n">argument</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">argument</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenizationId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">tokenizationForUUID</span><span class="p">[</span><span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenizationId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">situationMention</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">tokenization</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationSetList</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">situationSet</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">situationSetList</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">situation</span> <span class="ow">in</span> <span class="n">situationSet</span><span class="o">.</span><span class="n">situationList</span><span class="p">:</span>
+                <span class="n">comm</span><span class="o">.</span><span class="n">situationForUUID</span><span class="p">[</span><span class="n">situation</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">situation</span>
+                <span class="k">if</span> <span class="n">situation</span><span class="o">.</span><span class="n">mentionIdList</span><span class="p">:</span>
+                    <span class="n">situation</span><span class="o">.</span><span class="n">mentionList</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">mentionId</span> <span class="ow">in</span> <span class="n">situation</span><span class="o">.</span><span class="n">mentionIdList</span><span class="p">:</span>
+                        <span class="n">situation</span><span class="o">.</span><span class="n">mentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">situationMentionForUUID</span><span class="p">[</span><span class="n">mentionId</span><span class="o">.</span><span class="n">uuidString</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">situation</span><span class="o">.</span><span class="n">mentionList</span> <span class="o">=</span> <span class="bp">None</span>
 </pre></div>
 
   </div>
@@ -1181,69 +1203,89 @@ table {
     
   
     <div class="desc"><p>Create references for each UUID 'pointer'</p>
+<p>Args:</p>
+<ul>
+<li><code>comm</code>: A Concrete Communication object</li>
+</ul>
+<hr />
 <p>The Concrete schema uses UUIDs as internal pointers between
 Concrete objects.  This function adds member variables to Concrete
 objects that are references to the Concrete objects identified by
 the UUIDs.</p>
-<p>For example, each Entity has a 'mentionIdlist' that lists the
+<p>For example, each Entity has a <code>mentionIdlist</code> that lists the
 UUIDs of the EntityMentions for that Entity.  This function adds a
-'mentionList' variable to the Entity that is a list of references
+<code>mentionList</code> variable to the Entity that is a list of references
 to the actual EntityMention objects.  This allows you to access
 the EntityMentions using:</p>
-<p>entity.mentionList</p>
-<p>This function adds reference variables for:
-- a 'tokenization' to each TokenRefSequence
-- a 'entityMention' to each Argument
-- a 'sentence' backpointer to each Tokenization
-- a 'parentMention' backpointer to appropriate EntityMention</p>
-<p>And adds lists of reference variables for:
-- a 'mentionList' to each Entity
-- a 'situationMention' to each Argument
-- a 'mentionList' to each Situation
-- a 'childMentionList' to each EntityMention</p>
+<div class="codehilite"><pre>entity.mentionList
+</pre></div>
+
+
+<p>This function adds these reference variables:</p>
+<ul>
+<li><code>tokenization</code> to each TokenRefSequence</li>
+<li><code>entityMention</code> to each Argument</li>
+<li><code>sentence</code> backpointer to each Tokenization</li>
+<li><code>parentMention</code> backpointer to appropriate EntityMention</li>
+</ul>
+<p>And adds these lists of reference variables:</p>
+<ul>
+<li><code>mentionList</code> to each Entity</li>
+<li><code>situationMention</code> to each Argument</li>
+<li><code>mentionList</code> to each Situation</li>
+<li><code>childMentionList</code> to each EntityMention</li>
+</ul>
 <p>For variables that represent optional lists of UUIDs
-(e.g. situation.mentionIdList), Python Thrift will set the
-variable to None if the list is not provided.  When this function
+(e.g. <code>situation.mentionIdList</code>), Python Thrift will set the
+variable to <code>None</code> if the list is not provided.  When this function
 adds a list-of-references variable (in this case,
-situation.mentionList) for an <em>omitted</em> optional list, it sets the
-new variable to None - it DOES NOT leave the variable undefined.</p></div>
+<code>situation.mentionList</code>) for an <em>omitted</em> optional list, it sets the
+new variable to <code>None</code> - it <strong>DOES NOT</strong> leave the variable undefined.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.references.add_references_to_communication', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.references.add_references_to_communication" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create references for each UUID &#39;pointer&#39;</span>
 
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `comm`: A Concrete Communication object</span>
+
+<span class="sd">    -----</span>
+
 <span class="sd">    The Concrete schema uses UUIDs as internal pointers between</span>
 <span class="sd">    Concrete objects.  This function adds member variables to Concrete</span>
 <span class="sd">    objects that are references to the Concrete objects identified by</span>
 <span class="sd">    the UUIDs.</span>
 
-<span class="sd">    For example, each Entity has a &#39;mentionIdlist&#39; that lists the</span>
+<span class="sd">    For example, each Entity has a `mentionIdlist` that lists the</span>
 <span class="sd">    UUIDs of the EntityMentions for that Entity.  This function adds a</span>
-<span class="sd">    &#39;mentionList&#39; variable to the Entity that is a list of references</span>
+<span class="sd">    `mentionList` variable to the Entity that is a list of references</span>
 <span class="sd">    to the actual EntityMention objects.  This allows you to access</span>
 <span class="sd">    the EntityMentions using:</span>
 
-<span class="sd">      entity.mentionList</span>
+<span class="sd">        entity.mentionList</span>
 
-<span class="sd">    This function adds reference variables for:</span>
-<span class="sd">    - a &#39;tokenization&#39; to each TokenRefSequence</span>
-<span class="sd">    - a &#39;entityMention&#39; to each Argument</span>
-<span class="sd">    - a &#39;sentence&#39; backpointer to each Tokenization</span>
-<span class="sd">    - a &#39;parentMention&#39; backpointer to appropriate EntityMention</span>
+<span class="sd">    This function adds these reference variables:</span>
 
-<span class="sd">    And adds lists of reference variables for:</span>
-<span class="sd">    - a &#39;mentionList&#39; to each Entity</span>
-<span class="sd">    - a &#39;situationMention&#39; to each Argument</span>
-<span class="sd">    - a &#39;mentionList&#39; to each Situation</span>
-<span class="sd">    - a &#39;childMentionList&#39; to each EntityMention</span>
+<span class="sd">    - `tokenization` to each TokenRefSequence</span>
+<span class="sd">    - `entityMention` to each Argument</span>
+<span class="sd">    - `sentence` backpointer to each Tokenization</span>
+<span class="sd">    - `parentMention` backpointer to appropriate EntityMention</span>
+
+<span class="sd">    And adds these lists of reference variables:</span>
+
+<span class="sd">    - `mentionList` to each Entity</span>
+<span class="sd">    - `situationMention` to each Argument</span>
+<span class="sd">    - `mentionList` to each Situation</span>
+<span class="sd">    - `childMentionList` to each EntityMention</span>
 
 <span class="sd">    For variables that represent optional lists of UUIDs</span>
-<span class="sd">    (e.g. situation.mentionIdList), Python Thrift will set the</span>
-<span class="sd">    variable to None if the list is not provided.  When this function</span>
+<span class="sd">    (e.g. `situation.mentionIdList`), Python Thrift will set the</span>
+<span class="sd">    variable to `None` if the list is not provided.  When this function</span>
 <span class="sd">    adds a list-of-references variable (in this case,</span>
-<span class="sd">    situation.mentionList) for an *omitted* optional list, it sets the</span>
-<span class="sd">    new variable to None - it DOES NOT leave the variable undefined.</span>
+<span class="sd">    `situation.mentionList`) for an *omitted* optional list, it sets the</span>
+<span class="sd">    new variable to `None` - it **DOES NOT** leave the variable undefined.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 <span class="c">#    comm.dependencyParseForUUID = {}</span>
     <span class="n">comm</span><span class="o">.</span><span class="n">entityForUUID</span> <span class="o">=</span> <span class="p">{}</span>

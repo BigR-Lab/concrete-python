@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete.util.simple_comm API documentation</title>
-    <meta name="description" content="" />
+    <meta name="description" content="Create a simple (valid) Communication suitable for testing purposes" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1056,11 +1056,11 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete.util.simple_comm</span> module</h1>
-  
+  <p>Create a simple (valid) Communication suitable for testing purposes</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.simple_comm" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;</span>
+    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">time</span>
@@ -1080,6 +1080,21 @@ table {
 
 
 <span class="k">def</span> <span class="nf">create_simple_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">sentence_string</span><span class="o">=</span><span class="s">&quot;Super simple sentence .&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
+
+<span class="sd">    The Communication will have a single Section containing a single</span>
+<span class="sd">    Sentence.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `comm_id`: A string specifying a Communication ID</span>
+<span class="sd">    - `sentence_string`: A string to be used for the sentence text.</span>
+<span class="sd">       The string will be whitespace-tokenized.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A Concrete Communication object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">toolname</span><span class="o">=</span><span class="s">&quot;TEST&quot;</span>
     <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
 
@@ -1131,10 +1146,38 @@ table {
 
     
   
+    <div class="desc"><p>Create a simple (valid) Communication suitable for testing purposes</p>
+<p>The Communication will have a single Section containing a single
+Sentence.</p>
+<p>Args:</p>
+<ul>
+<li><code>comm_id</code>: A string specifying a Communication ID</li>
+<li><code>sentence_string</code>: A string to be used for the sentence text.
+   The string will be whitespace-tokenized.</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>A Concrete Communication object</li>
+</ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.create_simple_comm', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.simple_comm.create_simple_comm" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">create_simple_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">sentence_string</span><span class="o">=</span><span class="s">&quot;Super simple sentence .&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
+
+<span class="sd">    The Communication will have a single Section containing a single</span>
+<span class="sd">    Sentence.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `comm_id`: A string specifying a Communication ID</span>
+<span class="sd">    - `sentence_string`: A string to be used for the sentence text.</span>
+<span class="sd">       The string will be whitespace-tokenized.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A Concrete Communication object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">toolname</span><span class="o">=</span><span class="s">&quot;TEST&quot;</span>
     <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
 

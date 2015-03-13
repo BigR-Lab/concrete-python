@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete.util.json_fu API documentation</title>
-    <meta name="description" content="" />
+    <meta name="description" content="Convert Concrete objects to JSON strings" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1058,11 +1058,11 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete.util.json_fu</span> module</h1>
-  
+  <p>Convert Concrete objects to JSON strings</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;</span>
+    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Convert Concrete objects to JSON strings</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">json</span>
@@ -1074,28 +1074,44 @@ table {
 
 
 <span class="k">def</span> <span class="nf">communication_file_to_json</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a Communication filename, deserializes Communication from</span>
-<span class="sd">    file, returns a JSON string with the information in that</span>
-<span class="sd">    Communication.</span>
+    <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Communication</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `communication_filename`: String specifying Communication filename</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Communication</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">tokenlattice_file_to_json</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a Communication filename, deserializes Communication from</span>
-<span class="sd">    file, returns a JSON string with the information in that</span>
-<span class="sd">    Communication.</span>
+    <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a TokenLattice</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `toklat_filename`: String specifying TokenLattice filename</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the TokenLattice</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">toklat</span> <span class="o">=</span> <span class="n">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">toklat</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">thrift_to_json</span><span class="p">(</span><span class="n">tobj</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a Thrift instance, returns a JSON string with the</span>
-<span class="sd">    information in that Thrift object.</span>
+    <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Thrift object</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `tobj`: A Thrift object</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Thrift object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">thrift_json_string</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">tobj</span><span class="p">,</span> <span class="n">TJSONProtocol</span><span class="o">.</span><span class="n">TSimpleJSONProtocolFactory</span><span class="p">())</span>
     <span class="n">thrift_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">thrift_json_string</span><span class="p">)</span>
@@ -1118,17 +1134,28 @@ table {
 
     
   
-    <div class="desc"><p>Takes a Communication filename, deserializes Communication from
-file, returns a JSON string with the information in that
-Communication.</p></div>
+    <div class="desc"><p>Get a "pretty-printed" JSON string representation for a Communication</p>
+<p>Args:</p>
+<ul>
+<li><code>communication_filename</code>: String specifying Communication filename</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>A string containing a "pretty-printed" JSON representation of the Communication</li>
+</ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.communication_file_to_json', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.communication_file_to_json" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">communication_file_to_json</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a Communication filename, deserializes Communication from</span>
-<span class="sd">    file, returns a JSON string with the information in that</span>
-<span class="sd">    Communication.</span>
+    <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Communication</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `communication_filename`: String specifying Communication filename</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Communication</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
@@ -1148,15 +1175,28 @@ Communication.</p></div>
 
     
   
-    <div class="desc"><p>Takes a Thrift instance, returns a JSON string with the
-information in that Thrift object.</p></div>
+    <div class="desc"><p>Get a "pretty-printed" JSON string representation for a Thrift object</p>
+<p>Args:</p>
+<ul>
+<li><code>tobj</code>: A Thrift object</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>A string containing a "pretty-printed" JSON representation of the Thrift object</li>
+</ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.thrift_to_json', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.thrift_to_json" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">thrift_to_json</span><span class="p">(</span><span class="n">tobj</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a Thrift instance, returns a JSON string with the</span>
-<span class="sd">    information in that Thrift object.</span>
+    <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Thrift object</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `tobj`: A Thrift object</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Thrift object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">thrift_json_string</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">tobj</span><span class="p">,</span> <span class="n">TJSONProtocol</span><span class="o">.</span><span class="n">TSimpleJSONProtocolFactory</span><span class="p">())</span>
     <span class="n">thrift_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">thrift_json_string</span><span class="p">)</span>
@@ -1177,17 +1217,28 @@ information in that Thrift object.</p></div>
 
     
   
-    <div class="desc"><p>Takes a Communication filename, deserializes Communication from
-file, returns a JSON string with the information in that
-Communication.</p></div>
+    <div class="desc"><p>Get a "pretty-printed" JSON string representation for a TokenLattice</p>
+<p>Args:</p>
+<ul>
+<li><code>toklat_filename</code>: String specifying TokenLattice filename</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>A string containing a "pretty-printed" JSON representation of the TokenLattice</li>
+</ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.tokenlattice_file_to_json', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.tokenlattice_file_to_json" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">tokenlattice_file_to_json</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a Communication filename, deserializes Communication from</span>
-<span class="sd">    file, returns a JSON string with the information in that</span>
-<span class="sd">    Communication.</span>
+    <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a TokenLattice</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `toklat_filename`: String specifying TokenLattice filename</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the TokenLattice</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">toklat</span> <span class="o">=</span> <span class="n">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">toklat</span><span class="p">)</span>

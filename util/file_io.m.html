@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete.util.file_io API documentation</title>
-    <meta name="description" content="" />
+    <meta name="description" content="Code for reading and writing Concrete Communications" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1056,9 +1056,6 @@ table {
   <ul>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationReader.__init__">__init__</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationReader.next">next</a></li>
-    <li class="mono"><a href="#concrete.util.file_io.CommunicationReader.next_from_stream">next_from_stream</a></li>
-    <li class="mono"><a href="#concrete.util.file_io.CommunicationReader.next_from_tar">next_from_tar</a></li>
-    <li class="mono"><a href="#concrete.util.file_io.CommunicationReader.next_from_zip">next_from_zip</a></li>
   </ul>
 
         </li>
@@ -1099,11 +1096,11 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete.util.file_io</span> module</h1>
-  
+  <p>Code for reading and writing Concrete Communications</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;</span>
+    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Code for reading and writing Concrete Communications</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">cStringIO</span>
@@ -1126,16 +1123,18 @@ table {
 
 <span class="sd">    The Thrift file is assumed to be encoded using TCompactProtocol</span>
 
-<span class="sd">    WARNING - Thrift deserialization tends to fail silently.  For</span>
+<span class="sd">    **WARNING** - Thrift deserialization tends to fail silently.  For</span>
 <span class="sd">    example, the Thrift libraries will not complain if you try to</span>
-<span class="sd">    deserialize data from the file &#39;/dev/urandom&#39;.</span>
+<span class="sd">    deserialize data from the file `/dev/urandom`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        thrift_obj: A Thrift object (e.g. a Communication object)</span>
-<span class="sd">        filename:  A filename string</span>
+
+<span class="sd">    - `thrift_obj`: A Thrift object (e.g. a Communication object)</span>
+<span class="sd">    - `filename`:  A filename string</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The Thrift object that was passed in as an argument</span>
+
+<span class="sd">    -  The Thrift object that was passed in as an argument</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">)</span>
     <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">thrift_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -1144,10 +1143,15 @@ table {
     <span class="k">return</span> <span class="n">thrift_obj</span>
 
 <span class="k">def</span> <span class="nf">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes the filename of a serialized Concrete Communication file,</span>
-<span class="sd">    reads the Communication from the file and returns an instantiated</span>
-<span class="sd">    Communication instance.</span>
+    <span class="sd">&quot;&quot;&quot;Read a Communication from the file specified by filename</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `communication_filename`: String with filename</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A Concrete `Communication` object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_thrift_from_file</span><span class="p">(</span><span class="n">Communication</span><span class="p">(),</span> <span class="n">communication_filename</span><span class="p">)</span>
     <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
@@ -1174,7 +1178,8 @@ table {
 <span class="k">class</span> <span class="nc">CommunicationReader</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Class for reading one or more Communications from a file</span>
 
-<span class="sd">    Support filetypes are:</span>
+<span class="sd">    Supported filetypes are:</span>
+
 <span class="sd">    - a file with a single Communication</span>
 <span class="sd">    - a file with multiple Communications concatenated together</span>
 <span class="sd">    - a gzipped file with a single Communication</span>
@@ -1182,16 +1187,23 @@ table {
 <span class="sd">    - a .tar.gz file with one or more Communications</span>
 <span class="sd">    - a .zip file with one or more Communications</span>
 
-<span class="sd">    CommunicationReader adds a &quot;filename&quot; field to each Communication.</span>
+<span class="sd">    CommunicationReader adds a `filename` field to each Communication.</span>
 <span class="sd">    If the CommunicationReader is reading from an archive, then</span>
-<span class="sd">    &quot;filename&quot; will be set to the name of the Communication file in</span>
-<span class="sd">    the archive (e.g. &quot;foo.concrete&quot;), and not the name of the archive</span>
-<span class="sd">    file (e.g. &quot;bar.zip&quot;).  If the CommunicationReader is reading from</span>
+<span class="sd">    `filename` will be set to the name of the Communication file in</span>
+<span class="sd">    the archive (e.g. `foo.concrete`), and not the name of the archive</span>
+<span class="sd">    file (e.g. `bar.zip`).  If the CommunicationReader is reading from</span>
 <span class="sd">    a concatenated file (instead of an archive), then all</span>
 <span class="sd">    Communications extracted from the concatenated file will have the</span>
-<span class="sd">    same value for the &quot;filename&quot; field.  The &quot;filename&quot; field is not</span>
+<span class="sd">    same value for the `filename` field.  The `filename` field is not</span>
 <span class="sd">    part of the Thrift schema, and thus will not be serialized when a</span>
 <span class="sd">    Communication is saved.</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        for comm in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):</span>
+<span class="sd">            do_something(comm)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span> <span class="o">=</span> <span class="n">filename</span>
@@ -1221,13 +1233,13 @@ table {
 
     <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_stream</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_stream</span><span class="p">()</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_tar</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_tar</span><span class="p">()</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_zip</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_zip</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
             <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
@@ -1238,7 +1250,7 @@ table {
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">raise</span> <span class="ne">StopIteration</span>
 
-    <span class="k">def</span> <span class="nf">next_from_tar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_next_from_tar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="n">tarinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">tarinfo</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -1258,7 +1270,7 @@ table {
             <span class="n">comm</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
             <span class="k">return</span> <span class="n">comm</span>
 
-    <span class="k">def</span> <span class="nf">next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">StopIteration</span>
         <span class="n">zipinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span><span class="p">]</span>
@@ -1274,6 +1286,14 @@ table {
 
 <span class="k">class</span> <span class="nc">CommunicationWriter</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a file</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        writer = CommunicationWriter(&#39;foo.concrete&#39;)</span>
+<span class="sd">        writer.write(existing_comm_object)</span>
+<span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -1288,6 +1308,16 @@ table {
 
 <span class="k">class</span> <span class="nc">CommunicationWriterTGZ</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a .TAR.GZ archive</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        writer = CommunicationWriterTGZ(&#39;multiple_comms.tgz&#39;)</span>
+<span class="sd">        writer.write(comm_object_one, &#39;comm_one.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_two, &#39;comm_two.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_three, &#39;comm_three.concrete&#39;)</span>
+<span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -1323,17 +1353,28 @@ table {
 
     
   
-    <div class="desc"><p>Takes the filename of a serialized Concrete Communication file,
-reads the Communication from the file and returns an instantiated
-Communication instance.</p></div>
+    <div class="desc"><p>Read a Communication from the file specified by filename</p>
+<p>Args:</p>
+<ul>
+<li><code>communication_filename</code>: String with filename</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>A Concrete <code>Communication</code> object</li>
+</ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.read_communication_from_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.read_communication_from_file" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes the filename of a serialized Concrete Communication file,</span>
-<span class="sd">    reads the Communication from the file and returns an instantiated</span>
-<span class="sd">    Communication instance.</span>
+    <span class="sd">&quot;&quot;&quot;Read a Communication from the file specified by filename</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    - `communication_filename`: String with filename</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    - A Concrete `Communication` object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_thrift_from_file</span><span class="p">(</span><span class="n">Communication</span><span class="p">(),</span> <span class="n">communication_filename</span><span class="p">)</span>
     <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
@@ -1356,14 +1397,18 @@ Communication instance.</p></div>
   
     <div class="desc"><p>Instantiate Thrift object from contents of named file</p>
 <p>The Thrift file is assumed to be encoded using TCompactProtocol</p>
-<p>WARNING - Thrift deserialization tends to fail silently.  For
+<p><strong>WARNING</strong> - Thrift deserialization tends to fail silently.  For
 example, the Thrift libraries will not complain if you try to
-deserialize data from the file '/dev/urandom'.</p>
-<p>Args:
-    thrift_obj: A Thrift object (e.g. a Communication object)
-    filename:  A filename string</p>
-<p>Returns:
-    The Thrift object that was passed in as an argument</p></div>
+deserialize data from the file <code>/dev/urandom</code>.</p>
+<p>Args:</p>
+<ul>
+<li><code>thrift_obj</code>: A Thrift object (e.g. a Communication object)</li>
+<li><code>filename</code>:  A filename string</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>The Thrift object that was passed in as an argument</li>
+</ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.read_thrift_from_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.read_thrift_from_file" class="source">
@@ -1372,16 +1417,18 @@ deserialize data from the file '/dev/urandom'.</p>
 
 <span class="sd">    The Thrift file is assumed to be encoded using TCompactProtocol</span>
 
-<span class="sd">    WARNING - Thrift deserialization tends to fail silently.  For</span>
+<span class="sd">    **WARNING** - Thrift deserialization tends to fail silently.  For</span>
 <span class="sd">    example, the Thrift libraries will not complain if you try to</span>
-<span class="sd">    deserialize data from the file &#39;/dev/urandom&#39;.</span>
+<span class="sd">    deserialize data from the file `/dev/urandom`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        thrift_obj: A Thrift object (e.g. a Communication object)</span>
-<span class="sd">        filename:  A filename string</span>
+
+<span class="sd">    - `thrift_obj`: A Thrift object (e.g. a Communication object)</span>
+<span class="sd">    - `filename`:  A filename string</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The Thrift object that was passed in as an argument</span>
+
+<span class="sd">    -  The Thrift object that was passed in as an argument</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">)</span>
     <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">thrift_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -1477,30 +1524,38 @@ TokenLattice instance.</p></div>
       
   
     <div class="desc"><p>Class for reading one or more Communications from a file</p>
-<p>Support filetypes are:
-- a file with a single Communication
-- a file with multiple Communications concatenated together
-- a gzipped file with a single Communication
-- a gzipped file with multiple Communications concatenated together
-- a .tar.gz file with one or more Communications
-- a .zip file with one or more Communications</p>
-<p>CommunicationReader adds a "filename" field to each Communication.
+<p>Supported filetypes are:</p>
+<ul>
+<li>a file with a single Communication</li>
+<li>a file with multiple Communications concatenated together</li>
+<li>a gzipped file with a single Communication</li>
+<li>a gzipped file with multiple Communications concatenated together</li>
+<li>a .tar.gz file with one or more Communications</li>
+<li>a .zip file with one or more Communications</li>
+</ul>
+<p>CommunicationReader adds a <code>filename</code> field to each Communication.
 If the CommunicationReader is reading from an archive, then
-"filename" will be set to the name of the Communication file in
-the archive (e.g. "foo.concrete"), and not the name of the archive
-file (e.g. "bar.zip").  If the CommunicationReader is reading from
+<code>filename</code> will be set to the name of the Communication file in
+the archive (e.g. <code>foo.concrete</code>), and not the name of the archive
+file (e.g. <code>bar.zip</code>).  If the CommunicationReader is reading from
 a concatenated file (instead of an archive), then all
 Communications extracted from the concatenated file will have the
-same value for the "filename" field.  The "filename" field is not
+same value for the <code>filename</code> field.  The <code>filename</code> field is not
 part of the Thrift schema, and thus will not be serialized when a
-Communication is saved.</p></div>
+Communication is saved.</p>
+<hr />
+<p>Sample usage:</p>
+<div class="codehilite"><pre>for comm in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):
+    do_something(comm)
+</pre></div></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationReader" class="source">
     <div class="codehilite"><pre><span class="k">class</span> <span class="nc">CommunicationReader</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Class for reading one or more Communications from a file</span>
 
-<span class="sd">    Support filetypes are:</span>
+<span class="sd">    Supported filetypes are:</span>
+
 <span class="sd">    - a file with a single Communication</span>
 <span class="sd">    - a file with multiple Communications concatenated together</span>
 <span class="sd">    - a gzipped file with a single Communication</span>
@@ -1508,16 +1563,23 @@ Communication is saved.</p></div>
 <span class="sd">    - a .tar.gz file with one or more Communications</span>
 <span class="sd">    - a .zip file with one or more Communications</span>
 
-<span class="sd">    CommunicationReader adds a &quot;filename&quot; field to each Communication.</span>
+<span class="sd">    CommunicationReader adds a `filename` field to each Communication.</span>
 <span class="sd">    If the CommunicationReader is reading from an archive, then</span>
-<span class="sd">    &quot;filename&quot; will be set to the name of the Communication file in</span>
-<span class="sd">    the archive (e.g. &quot;foo.concrete&quot;), and not the name of the archive</span>
-<span class="sd">    file (e.g. &quot;bar.zip&quot;).  If the CommunicationReader is reading from</span>
+<span class="sd">    `filename` will be set to the name of the Communication file in</span>
+<span class="sd">    the archive (e.g. `foo.concrete`), and not the name of the archive</span>
+<span class="sd">    file (e.g. `bar.zip`).  If the CommunicationReader is reading from</span>
 <span class="sd">    a concatenated file (instead of an archive), then all</span>
 <span class="sd">    Communications extracted from the concatenated file will have the</span>
-<span class="sd">    same value for the &quot;filename&quot; field.  The &quot;filename&quot; field is not</span>
+<span class="sd">    same value for the `filename` field.  The `filename` field is not</span>
 <span class="sd">    part of the Thrift schema, and thus will not be serialized when a</span>
 <span class="sd">    Communication is saved.</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        for comm in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):</span>
+<span class="sd">            do_something(comm)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span> <span class="o">=</span> <span class="n">filename</span>
@@ -1547,13 +1609,13 @@ Communication is saved.</p></div>
 
     <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_stream</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_stream</span><span class="p">()</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_tar</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_tar</span><span class="p">()</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_zip</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_zip</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
             <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
@@ -1564,7 +1626,7 @@ Communication is saved.</p></div>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">raise</span> <span class="ne">StopIteration</span>
 
-    <span class="k">def</span> <span class="nf">next_from_tar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_next_from_tar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="n">tarinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">tarinfo</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -1584,7 +1646,7 @@ Communication is saved.</p></div>
             <span class="n">comm</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
             <span class="k">return</span> <span class="n">comm</span>
 
-    <span class="k">def</span> <span class="nf">next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">StopIteration</span>
         <span class="n">zipinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span><span class="p">]</span>
@@ -1662,109 +1724,11 @@ Communication is saved.</p></div>
   <div id="source-concrete.util.file_io.CommunicationReader.next" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_stream</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_stream</span><span class="p">()</span>
     <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_tar</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_tar</span><span class="p">()</span>
     <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_from_zip</span><span class="p">()</span>
-</pre></div>
-
-  </div>
-</div>
-
-  </div>
-  
-            
-  <div class="item">
-    <div class="name def" id="concrete.util.file_io.CommunicationReader.next_from_stream">
-    <p>def <span class="ident">next_from_stream</span>(</p><p>self)</p>
-    </div>
-    
-
-    
-  
-  <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader.next_from_stream', this);">Show source &equiv;</a></p>
-  <div id="source-concrete.util.file_io.CommunicationReader.next_from_stream" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
-        <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
-        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
-        <span class="n">comm</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span>
-        <span class="k">return</span> <span class="n">comm</span>
-    <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="k">raise</span> <span class="ne">StopIteration</span>
-</pre></div>
-
-  </div>
-</div>
-
-  </div>
-  
-            
-  <div class="item">
-    <div class="name def" id="concrete.util.file_io.CommunicationReader.next_from_tar">
-    <p>def <span class="ident">next_from_tar</span>(</p><p>self)</p>
-    </div>
-    
-
-    
-  
-  <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader.next_from_tar', this);">Show source &equiv;</a></p>
-  <div id="source-concrete.util.file_io.CommunicationReader.next_from_tar" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">next_from_tar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="n">tarinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">tarinfo</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">StopIteration</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">isfile</span><span class="p">():</span>
-            <span class="c"># Ignore directories</span>
-            <span class="k">continue</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="s">&#39;.&#39;</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>
-            <span class="c"># Ignore attribute files created by OS X tar</span>
-            <span class="k">continue</span>
-        <span class="n">comm</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
-            <span class="n">Communication</span><span class="p">(),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">extractfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-            <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
-        <span class="n">comm</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="k">return</span> <span class="n">comm</span>
-</pre></div>
-
-  </div>
-</div>
-
-  </div>
-  
-            
-  <div class="item">
-    <div class="name def" id="concrete.util.file_io.CommunicationReader.next_from_zip">
-    <p>def <span class="ident">next_from_zip</span>(</p><p>self)</p>
-    </div>
-    
-
-    
-  
-  <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader.next_from_zip', this);">Show source &equiv;</a></p>
-  <div id="source-concrete.util.file_io.CommunicationReader.next_from_zip" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">StopIteration</span>
-    <span class="n">zipinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span><span class="p">]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="n">comm</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
-        <span class="n">Communication</span><span class="p">(),</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zipinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-        <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-    <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
-    <span class="n">comm</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">zipinfo</span><span class="o">.</span><span class="n">filename</span>
-    <span class="k">return</span> <span class="n">comm</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_zip</span><span class="p">()</span>
 </pre></div>
 
   </div>
@@ -1779,12 +1743,26 @@ Communication is saved.</p></div>
       <p id="concrete.util.file_io.CommunicationWriter" class="name">class <span class="ident">CommunicationWriter</span></p>
       
   
-    <div class="desc"><p>Class for writing one or more Communications to a file</p></div>
+    <div class="desc"><p>Class for writing one or more Communications to a file</p>
+<hr />
+<p>Sample usage:</p>
+<div class="codehilite"><pre>writer = CommunicationWriter(&#39;foo.concrete&#39;)
+writer.write(existing_comm_object)
+writer.close()
+</pre></div></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriter', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriter" class="source">
     <div class="codehilite"><pre><span class="k">class</span> <span class="nc">CommunicationWriter</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a file</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        writer = CommunicationWriter(&#39;foo.concrete&#39;)</span>
+<span class="sd">        writer.write(existing_comm_object)</span>
+<span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -1878,12 +1856,30 @@ Communication is saved.</p></div>
       <p id="concrete.util.file_io.CommunicationWriterTGZ" class="name">class <span class="ident">CommunicationWriterTGZ</span></p>
       
   
-    <div class="desc"><p>Class for writing one or more Communications to a .TAR.GZ archive</p></div>
+    <div class="desc"><p>Class for writing one or more Communications to a .TAR.GZ archive</p>
+<hr />
+<p>Sample usage:</p>
+<div class="codehilite"><pre>writer = CommunicationWriterTGZ(&#39;multiple_comms.tgz&#39;)
+writer.write(comm_object_one, &#39;comm_one.concrete&#39;)
+writer.write(comm_object_two, &#39;comm_two.concrete&#39;)
+writer.write(comm_object_three, &#39;comm_three.concrete&#39;)
+writer.close()
+</pre></div></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTGZ', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriterTGZ" class="source">
     <div class="codehilite"><pre><span class="k">class</span> <span class="nc">CommunicationWriterTGZ</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a .TAR.GZ archive</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        writer = CommunicationWriterTGZ(&#39;multiple_comms.tgz&#39;)</span>
+<span class="sd">        writer.write(comm_object_one, &#39;comm_one.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_two, &#39;comm_two.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_three, &#39;comm_three.concrete&#39;)</span>
+<span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>

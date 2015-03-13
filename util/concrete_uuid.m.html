@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete.util.concrete_uuid API documentation</title>
-    <meta name="description" content="" />
+    <meta name="description" content="Helper function for generating a Concrete UUID object" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1056,11 +1056,11 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete.util.concrete_uuid</span> module</h1>
-  
+  <p>Helper function for generating a Concrete UUID object</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.concrete_uuid" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;</span>
+    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Helper function for generating a Concrete UUID object</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c"># Force &#39;import uuid&#39; to import the Python standard library module</span>
@@ -1072,6 +1072,8 @@ table {
 <span class="kn">import</span> <span class="nn">concrete</span>
 
 <span class="k">def</span> <span class="nf">generate_UUID</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Helper function for generating a Concrete UUID object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">c_uuid</span> <span class="o">=</span> <span class="n">concrete</span><span class="o">.</span><span class="n">UUID</span><span class="p">()</span>
     <span class="n">c_uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">python_uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">c_uuid</span>
@@ -1093,10 +1095,13 @@ table {
 
     
   
+    <div class="desc"><p>Helper function for generating a Concrete UUID object</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.generate_UUID', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.concrete_uuid.generate_UUID" class="source">
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">generate_UUID</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Helper function for generating a Concrete UUID object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">c_uuid</span> <span class="o">=</span> <span class="n">concrete</span><span class="o">.</span><span class="n">UUID</span><span class="p">()</span>
     <span class="n">c_uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">python_uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">c_uuid</span>
