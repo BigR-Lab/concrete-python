@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>concrete.util.concrete_uuid API documentation</title>
-    <meta name="description" content="Helper function for generating a Concrete UUID object" />
+    <meta name="description" content="Helper functions for generating Concrete UUIDs" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -554,7 +554,7 @@ table {
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
   body {
     background: #fff;
@@ -858,8 +858,10 @@ table {
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
 .codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
 .codehilite .gd { color: #A00000 } /* Generic.Deleted */
@@ -1038,11 +1040,52 @@ table {
     <li class="set"><h3><a href="#header-functions">Functions</a></h3>
       
   <ul>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.bin_to_hex">bin_to_hex</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.compress_uuids">compress_uuids</a></li>
     <li class="mono"><a href="#concrete.util.concrete_uuid.generate_UUID">generate_UUID</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.generate_hex_unif">generate_hex_unif</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.generate_uuid_unif">generate_uuid_unif</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.hex_to_bin">hex_to_bin</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.join_uuid">join_uuid</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.split_uuid">split_uuid</a></li>
   </ul>
 
     </li>
 
+    <li class="set"><h3><a href="#header-classes">Classes</a></h3>
+      <ul>
+        <li class="mono">
+        <span class="class_name"><a href="#concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory">AnalyticUUIDGeneratorFactory</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.__init__">__init__</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.create">create</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#concrete.util.concrete_uuid.UUIDClustering">UUIDClustering</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.UUIDClustering.__init__">__init__</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.UUIDClustering.hashable_clusters">hashable_clusters</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#concrete.util.concrete_uuid.UUIDCompressor">UUIDCompressor</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.UUIDCompressor.__init__">__init__</a></li>
+    <li class="mono"><a href="#concrete.util.concrete_uuid.UUIDCompressor.compress">compress</a></li>
+  </ul>
+
+        </li>
+      </ul>
+    </li>
 
     </ul>
   </div>
@@ -1056,27 +1099,413 @@ table {
 
   <header id="section-intro">
   <h1 class="title"><span class="name">concrete.util.concrete_uuid</span> module</h1>
-  <p>Helper function for generating a Concrete UUID object</p>
+  <p>Helper functions for generating Concrete UUIDs</p>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.concrete_uuid" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Helper function for generating a Concrete UUID object</span>
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper functions for generating Concrete UUIDs</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="c"># Force &#39;import uuid&#39; to import the Python standard library module</span>
-<span class="c"># named &quot;uuid&quot;, and not the &quot;concrete.uuid&quot; module</span>
+<span class="c1"># Force &#39;import uuid&#39; to import the Python standard library module</span>
+<span class="c1"># named &quot;uuid&quot;, and not the &quot;concrete.uuid&quot; module</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
 
 <span class="kn">import</span> <span class="nn">uuid</span> <span class="kn">as</span> <span class="nn">python_uuid</span>
 
-<span class="kn">import</span> <span class="nn">concrete</span>
+<span class="kn">from</span> <span class="nn">thrift.Thrift</span> <span class="kn">import</span> <span class="n">TType</span>
+<span class="kn">from</span> <span class="nn">concrete.uuid.ttypes</span> <span class="kn">import</span> <span class="n">UUID</span>
+<span class="kn">from</span> <span class="nn">concrete.metadata.ttypes</span> <span class="kn">import</span> <span class="n">AnnotationMetadata</span>
+<span class="kn">from</span> <span class="nn">concrete.util.mem_io</span> <span class="kn">import</span> <span class="n">communication_deep_copy</span>
+
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isroutine</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
 
 <span class="k">def</span> <span class="nf">generate_UUID</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Helper function for generating a Concrete UUID object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">c_uuid</span> <span class="o">=</span> <span class="n">concrete</span><span class="o">.</span><span class="n">UUID</span><span class="p">()</span>
-    <span class="n">c_uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">python_uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">c_uuid</span>
+    <span class="k">return</span> <span class="n">UUID</span><span class="p">(</span><span class="n">uuidString</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">python_uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()))</span>
+
+
+<span class="k">def</span> <span class="nf">hex_to_bin</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">bin_to_hex</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="n">b</span><span class="p">)[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hex string &quot;</span><span class="si">%s</span><span class="s1">&quot; is longer than </span><span class="si">%d</span><span class="s1"> chars&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span> <span class="o">+</span> <span class="n">h</span>
+
+
+<span class="k">def</span> <span class="nf">split_uuid</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+
+    <span class="n">valid_input</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span> <span class="o">==</span> <span class="mi">12</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_input</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;uuid &quot;</span><span class="si">%s</span><span class="s1">&quot; is not of the form xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&#39;</span>
+            <span class="o">%</span> <span class="n">u</span>
+        <span class="p">)</span>
+
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">zs</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">join_uuid</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">):</span>
+    <span class="n">valid_input</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">12</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">12</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_input</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;uuid pieces do not have lengths 12, 8, 12&#39;</span><span class="p">)</span>
+
+    <span class="n">u</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">xs</span><span class="p">[:</span><span class="mi">8</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="mi">8</span><span class="p">:],</span> <span class="n">ys</span><span class="p">[:</span><span class="mi">4</span><span class="p">],</span> <span class="n">ys</span><span class="p">[</span><span class="mi">4</span><span class="p">:],</span> <span class="n">zs</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">u</span>
+
+
+<span class="k">def</span> <span class="nf">generate_hex_unif</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="s1">&#39;abcdef0123456789&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">generate_uuid_unif</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">join_uuid</span><span class="p">(</span><span class="n">generate_hex_unif</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span>
+                     <span class="n">generate_hex_unif</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span>
+                     <span class="n">generate_hex_unif</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">_AnalyticUUIDGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    UUID generator for a given analytic in a given communication.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span> <span class="o">=</span> <span class="n">split_uuid</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span> <span class="o">=</span> <span class="n">generate_hex_unif</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_z</span> <span class="o">=</span> <span class="n">hex_to_bin</span><span class="p">(</span><span class="n">generate_hex_unif</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_z_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_z_bound</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate and return a new concrete UUID.</span>
+<span class="sd">        StopIteration will never be raised.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_z</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">UUID</span><span class="p">(</span><span class="n">uuidString</span><span class="o">=</span><span class="n">join_uuid</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_xs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span><span class="p">,</span> <span class="n">bin_to_hex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_len</span><span class="p">)</span>
+        <span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">AnalyticUUIDGeneratorFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Factory for a compressible UUID generator.</span>
+
+<span class="sd">    One factory should be created per communication, and a new generator</span>
+<span class="sd">    should be created from that factory for each analytic processing the</span>
+<span class="sd">    communication.  Usually each program represents a single analytic,</span>
+<span class="sd">    so common usage is</span>
+
+<span class="sd">        augf = AnalyticUUIDGeneratorFactory(comm)</span>
+<span class="sd">        aug = augf.create()</span>
+<span class="sd">        for &lt;each annotation object created by this analytic&gt;:</span>
+<span class="sd">            annotation. = aug.next()</span>
+<span class="sd">            &lt;add annotation to communication&gt;</span>
+
+<span class="sd">    or if you&#39;re creating a new communication</span>
+
+<span class="sd">        augf = AnalyticUUIDGeneratorFactory()</span>
+<span class="sd">        aug = augf.create()</span>
+<span class="sd">        comm = &lt;create communication&gt;</span>
+<span class="sd">        comm.uuid = aug.next()</span>
+<span class="sd">        for &lt;each annotation object created by this analytic&gt;:</span>
+<span class="sd">            annotation. = aug.next()</span>
+<span class="sd">            &lt;add annotation to communication&gt;</span>
+
+<span class="sd">    where the annotation objects might be objects of type</span>
+<span class="sd">    Parse, DependencyParse, TokenTagging, CommunicationTagging, etc.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">comm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span> <span class="o">=</span> <span class="n">generate_uuid_unif</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span>
+
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create and return a UUID generator for a new analytic.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">_AnalyticUUIDGenerator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_filtered_getmembers</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Generate key-value pairs of object members that may contain UUIDs.</span>
+<span class="sd">    Over-generate, but filter the output enough that concrete objects</span>
+<span class="sd">    can be traversed recursively using this function without leading to</span>
+<span class="sd">    stack overflows or infinite loops.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span> <span class="ow">or</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;thrift_spec&#39;</span> <span class="ow">or</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;read&#39;</span> <span class="ow">or</span>
+                <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;write&#39;</span> <span class="ow">or</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;validate&#39;</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">isroutine</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)):</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+
+<span class="n">_FILTERED_TTYPES</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">TType</span><span class="o">.</span><span class="n">STRUCT</span><span class="p">,</span> <span class="n">TType</span><span class="o">.</span><span class="n">LIST</span><span class="p">,</span> <span class="n">TType</span><span class="o">.</span><span class="n">MAP</span><span class="p">,</span> <span class="n">TType</span><span class="o">.</span><span class="n">SET</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_fast_filtered_getmembers</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="s1">&#39;Fast thrift-specific implementation of filtered_getmembers.&#39;</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;thrift_spec&#39;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">thrift_spec</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">_FILTERED_TTYPES</span><span class="p">:</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                    <span class="k">yield</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">UUIDClustering</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Representation of the UUID instance clusters in a concrete</span>
+<span class="sd">    communication (each cluster represents the set of nested members of</span>
+<span class="sd">    the communication that reference or are identified by a given UUID).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># map: UUID -&gt; set of nested members</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hashable_clusters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the set of unlabeled UUID clusters in a unique and</span>
+<span class="sd">        hashable format.  Two UUIDClusterings c1 and c2 are equivalent</span>
+<span class="sd">        (the two underlying communications&#39; UUID structures are</span>
+<span class="sd">        equivalent) if and only if:</span>
+
+<span class="sd">            c1.hashable_clusters() == c2.hashable_clusters()</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Search obj for UUIDs, calling _add_uuid_field when UUIDs are</span>
+<span class="sd">        found and calling _search on other object members.</span>
+<span class="sd">        When _search calls itself, prefix is appended with the object</span>
+<span class="sd">        member name, forming a uniquely identifiable tuple</span>
+<span class="sd">        representation of the path from the root object to a nested</span>
+<span class="sd">        object member.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_uuid_field</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">((</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">),))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;UUIDClustering does not support sets&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">((</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">),))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_filtered_getmembers</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">_add_uuid_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add UUID field f (a unique, hashable representation of the path</span>
+<span class="sd">        from the root communication to a nested UUID object) to the UUID</span>
+<span class="sd">        cluster indexed by UUID string u.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">f</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">UUIDCompressor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_analytic</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_analytic</span> <span class="o">=</span> <span class="n">single_analytic</span>
+
+    <span class="k">def</span> <span class="nf">compress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="s1">&#39;Return a deep copy of comm with compressed UUIDs.&#39;</span>
+
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">communication_deep_copy</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">augs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuids</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuid_refs</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cc</span>
+
+    <span class="k">def</span> <span class="nf">_compress_uuids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="s1">&#39;Generate new UUIDs in &quot;uuid&quot; fields and save mapping&#39;</span>
+
+        <span class="n">tool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tool</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name_is_uuid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_uuid</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;uuid not instance of UUID&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>  <span class="c1"># we already took care of &quot;uuid&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">elt</span><span class="p">,</span> <span class="n">elt_name_is_uuid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuids</span><span class="p">(</span>
+                    <span class="n">elt</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="n">elt_name_is_uuid</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="n">tool</span>
+                <span class="p">),</span>
+                <span class="n">obj</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compress_uuid_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="s1">&#39;Update UUID references (not in &quot;uuid&quot; fields) using saved mapping&#39;</span>
+
+        <span class="n">tool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tool</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name_is_uuid</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">elt</span><span class="p">,</span> <span class="n">elt_name_is_uuid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuid_refs</span><span class="p">(</span>
+                    <span class="n">elt</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="n">elt_name_is_uuid</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="n">tool</span>
+                <span class="p">),</span>
+                <span class="n">obj</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return tool for this object, given the parent tool;</span>
+<span class="sd">        update self.augs</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">AnnotationMetadata</span><span class="p">):</span>
+                <span class="n">tool</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">tool</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;metadata not instance of AnnotationMetadata&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_analytic</span><span class="p">:</span>
+            <span class="n">tool</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">tool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">augs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">augs</span><span class="p">[</span><span class="n">tool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">tool</span>
+
+    <span class="k">def</span> <span class="nf">_gen_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_uuid</span><span class="p">,</span> <span class="n">tool</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a new UUID for the provided tool, using self.augs;</span>
+<span class="sd">        update self.uuid_map</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">aug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">augs</span><span class="p">[</span><span class="n">tool</span><span class="p">]</span>
+        <span class="n">new_uuid</span> <span class="o">=</span> <span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">old_uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;encountered UUID </span><span class="si">%s</span><span class="s1"> twice, aborting&#39;</span> <span class="o">%</span>
+                             <span class="n">old_uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span><span class="p">[</span><span class="n">old_uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_uuid</span><span class="o">.</span><span class="n">uuidString</span>
+        <span class="k">return</span> <span class="n">new_uuid</span><span class="o">.</span><span class="n">uuidString</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_apply</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply f to the members of x if it is a basic container type,</span>
+<span class="sd">        otherwise apply f to x directly.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_fast_filtered_getmembers</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;uuid&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">compress_uuids</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">single_analytic</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a copy of communication comm with UUIDs converted according</span>
+<span class="sd">    to the compressible UUID scheme.  Return a 2-tuple containing that</span>
+<span class="sd">    new communication and the UUIDCompressor object used to perform</span>
+<span class="sd">    the conversion.</span>
+
+<span class="sd">    If verify is True, use a heuristic to verify the UUID link structure</span>
+<span class="sd">    is preserved in the new communication.  If single_analytic is True,</span>
+<span class="sd">    use a single analytic prefix for all UUIDs in comm.</span>
+
+<span class="sd">    If verify is True and comm has references added, throw a ValueError</span>
+<span class="sd">    because verification would cause an infinite loop.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">verify</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="s1">&#39;tokenizationForUUID&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;cannot verify communication with references&#39;</span><span class="p">)</span>
+
+    <span class="n">uc</span> <span class="o">=</span> <span class="n">UUIDCompressor</span><span class="p">(</span><span class="n">single_analytic</span><span class="o">=</span><span class="n">single_analytic</span><span class="p">)</span>
+
+    <span class="n">new_comm</span> <span class="o">=</span> <span class="n">uc</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+
+    <span class="n">num_old_uuids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">uc</span><span class="o">.</span><span class="n">uuid_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="n">num_new_uuids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">uc</span><span class="o">.</span><span class="n">uuid_map</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+    <span class="k">if</span> <span class="n">verify</span><span class="p">:</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">UUIDClustering</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span><span class="o">.</span><span class="n">hashable_clusters</span><span class="p">()</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">UUIDClustering</span><span class="p">(</span><span class="n">new_comm</span><span class="p">)</span><span class="o">.</span><span class="n">hashable_clusters</span><span class="p">()</span>
+
+        <span class="c1"># Verification is c1 == c2;</span>
+        <span class="c1"># also check UUID map lengths are the same as a sanity-check</span>
+        <span class="k">if</span> <span class="n">num_old_uuids</span> <span class="o">==</span> <span class="n">num_new_uuids</span> <span class="ow">and</span> <span class="n">c1</span> <span class="o">==</span> <span class="n">c2</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;verified </span><span class="si">%s</span><span class="s1"> (</span><span class="si">%d</span><span class="s1"> uuid instances, </span><span class="si">%d</span><span class="s1"> uuids)&#39;</span>
+                         <span class="o">%</span> <span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">c1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> failed verification&#39;</span> <span class="o">%</span> <span class="n">comm</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;uuid counts: </span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">&#39;</span>
+                          <span class="o">%</span> <span class="p">(</span><span class="n">num_old_uuids</span><span class="p">,</span> <span class="n">num_new_uuids</span><span class="p">))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;verified number of uuids: </span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">&#39;</span>
+                          <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">c2</span><span class="p">)))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;verified number of uuid instances: </span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">&#39;</span>
+                          <span class="o">%</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">c1</span><span class="p">)),</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">c2</span><span class="p">))))</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> failed verification&#39;</span> <span class="o">%</span> <span class="n">comm</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_old_uuids</span> <span class="o">!=</span> <span class="n">num_new_uuids</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;uuid counts are not the same (</span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">)&#39;</span>
+                            <span class="o">%</span> <span class="p">(</span><span class="n">num_old_uuids</span><span class="p">,</span> <span class="n">num_new_uuids</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">new_comm</span><span class="p">,</span> <span class="n">uc</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1086,6 +1515,110 @@ table {
   <section id="section-items">
 
     <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.bin_to_hex">
+    <p>def <span class="ident">bin_to_hex</span>(</p><p>b, n=None)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.bin_to_hex', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.bin_to_hex" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">bin_to_hex</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="n">b</span><span class="p">)[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hex string &quot;</span><span class="si">%s</span><span class="s1">&quot; is longer than </span><span class="si">%d</span><span class="s1"> chars&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span> <span class="o">+</span> <span class="n">h</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.compress_uuids">
+    <p>def <span class="ident">compress_uuids</span>(</p><p>comm, verify=False, single_analytic=False)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create a copy of communication comm with UUIDs converted according
+to the compressible UUID scheme.  Return a 2-tuple containing that
+new communication and the UUIDCompressor object used to perform
+the conversion.</p>
+<p>If verify is True, use a heuristic to verify the UUID link structure
+is preserved in the new communication.  If single_analytic is True,
+use a single analytic prefix for all UUIDs in comm.</p>
+<p>If verify is True and comm has references added, throw a ValueError
+because verification would cause an infinite loop.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.compress_uuids', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.compress_uuids" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">compress_uuids</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">single_analytic</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a copy of communication comm with UUIDs converted according</span>
+<span class="sd">    to the compressible UUID scheme.  Return a 2-tuple containing that</span>
+<span class="sd">    new communication and the UUIDCompressor object used to perform</span>
+<span class="sd">    the conversion.</span>
+
+<span class="sd">    If verify is True, use a heuristic to verify the UUID link structure</span>
+<span class="sd">    is preserved in the new communication.  If single_analytic is True,</span>
+<span class="sd">    use a single analytic prefix for all UUIDs in comm.</span>
+
+<span class="sd">    If verify is True and comm has references added, throw a ValueError</span>
+<span class="sd">    because verification would cause an infinite loop.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">verify</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="s1">&#39;tokenizationForUUID&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;cannot verify communication with references&#39;</span><span class="p">)</span>
+
+    <span class="n">uc</span> <span class="o">=</span> <span class="n">UUIDCompressor</span><span class="p">(</span><span class="n">single_analytic</span><span class="o">=</span><span class="n">single_analytic</span><span class="p">)</span>
+
+    <span class="n">new_comm</span> <span class="o">=</span> <span class="n">uc</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+
+    <span class="n">num_old_uuids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">uc</span><span class="o">.</span><span class="n">uuid_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="n">num_new_uuids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">uc</span><span class="o">.</span><span class="n">uuid_map</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+    <span class="k">if</span> <span class="n">verify</span><span class="p">:</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">UUIDClustering</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span><span class="o">.</span><span class="n">hashable_clusters</span><span class="p">()</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">UUIDClustering</span><span class="p">(</span><span class="n">new_comm</span><span class="p">)</span><span class="o">.</span><span class="n">hashable_clusters</span><span class="p">()</span>
+
+        <span class="c1"># Verification is c1 == c2;</span>
+        <span class="c1"># also check UUID map lengths are the same as a sanity-check</span>
+        <span class="k">if</span> <span class="n">num_old_uuids</span> <span class="o">==</span> <span class="n">num_new_uuids</span> <span class="ow">and</span> <span class="n">c1</span> <span class="o">==</span> <span class="n">c2</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;verified </span><span class="si">%s</span><span class="s1"> (</span><span class="si">%d</span><span class="s1"> uuid instances, </span><span class="si">%d</span><span class="s1"> uuids)&#39;</span>
+                         <span class="o">%</span> <span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">c1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> failed verification&#39;</span> <span class="o">%</span> <span class="n">comm</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;uuid counts: </span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">&#39;</span>
+                          <span class="o">%</span> <span class="p">(</span><span class="n">num_old_uuids</span><span class="p">,</span> <span class="n">num_new_uuids</span><span class="p">))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;verified number of uuids: </span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">&#39;</span>
+                          <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">c2</span><span class="p">)))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;verified number of uuid instances: </span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">&#39;</span>
+                          <span class="o">%</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">c1</span><span class="p">)),</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">c2</span><span class="p">))))</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> failed verification&#39;</span> <span class="o">%</span> <span class="n">comm</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_old_uuids</span> <span class="o">!=</span> <span class="n">num_new_uuids</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;uuid counts are not the same (</span><span class="si">%d</span><span class="s1"> -&gt; </span><span class="si">%d</span><span class="s1">)&#39;</span>
+                            <span class="o">%</span> <span class="p">(</span><span class="n">num_old_uuids</span><span class="p">,</span> <span class="n">num_new_uuids</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">new_comm</span><span class="p">,</span> <span class="n">uc</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
       
   <div class="item">
     <div class="name def" id="concrete.util.concrete_uuid.generate_UUID">
@@ -1099,12 +1632,147 @@ table {
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.generate_UUID', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.concrete_uuid.generate_UUID" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">generate_UUID</span><span class="p">():</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_UUID</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Helper function for generating a Concrete UUID object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">c_uuid</span> <span class="o">=</span> <span class="n">concrete</span><span class="o">.</span><span class="n">UUID</span><span class="p">()</span>
-    <span class="n">c_uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">python_uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">c_uuid</span>
+    <span class="k">return</span> <span class="n">UUID</span><span class="p">(</span><span class="n">uuidString</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">python_uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()))</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.generate_hex_unif">
+    <p>def <span class="ident">generate_hex_unif</span>(</p><p>n)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.generate_hex_unif', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.generate_hex_unif" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_hex_unif</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="s1">&#39;abcdef0123456789&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.generate_uuid_unif">
+    <p>def <span class="ident">generate_uuid_unif</span>(</p><p>)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.generate_uuid_unif', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.generate_uuid_unif" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_uuid_unif</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">join_uuid</span><span class="p">(</span><span class="n">generate_hex_unif</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span>
+                     <span class="n">generate_hex_unif</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span>
+                     <span class="n">generate_hex_unif</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.hex_to_bin">
+    <p>def <span class="ident">hex_to_bin</span>(</p><p>h)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.hex_to_bin', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.hex_to_bin" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">hex_to_bin</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.join_uuid">
+    <p>def <span class="ident">join_uuid</span>(</p><p>xs, ys, zs)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.join_uuid', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.join_uuid" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">join_uuid</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">):</span>
+    <span class="n">valid_input</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">12</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">12</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_input</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;uuid pieces do not have lengths 12, 8, 12&#39;</span><span class="p">)</span>
+
+    <span class="n">u</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">xs</span><span class="p">[:</span><span class="mi">8</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="mi">8</span><span class="p">:],</span> <span class="n">ys</span><span class="p">[:</span><span class="mi">4</span><span class="p">],</span> <span class="n">ys</span><span class="p">[</span><span class="mi">4</span><span class="p">:],</span> <span class="n">zs</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">u</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.split_uuid">
+    <p>def <span class="ident">split_uuid</span>(</p><p>u)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.split_uuid', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.split_uuid" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">split_uuid</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+
+    <span class="n">valid_input</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span> <span class="o">==</span> <span class="mi">12</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_input</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;uuid &quot;</span><span class="si">%s</span><span class="s1">&quot; is not of the form xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&#39;</span>
+            <span class="o">%</span> <span class="n">u</span>
+        <span class="p">)</span>
+
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">zs</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1113,6 +1781,470 @@ table {
   </div>
   
 
+    <h2 class="section-title" id="header-classes">Classes</h2>
+      
+      <div class="item">
+      <p id="concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory" class="name">class <span class="ident">AnalyticUUIDGeneratorFactory</span></p>
+      
+  
+    <div class="desc"><p>Factory for a compressible UUID generator.</p>
+<p>One factory should be created per communication, and a new generator
+should be created from that factory for each analytic processing the
+communication.  Usually each program represents a single analytic,
+so common usage is</p>
+<div class="codehilite"><pre><span></span>augf = AnalyticUUIDGeneratorFactory(comm)
+aug = augf.create()
+for &lt;each annotation object created by this analytic&gt;:
+    annotation. = aug.next()
+    &lt;add annotation to communication&gt;
+</pre></div>
+
+
+<p>or if you're creating a new communication</p>
+<div class="codehilite"><pre><span></span>augf = AnalyticUUIDGeneratorFactory()
+aug = augf.create()
+comm = &lt;create communication&gt;
+comm.uuid = aug.next()
+for &lt;each annotation object created by this analytic&gt;:
+    annotation. = aug.next()
+    &lt;add annotation to communication&gt;
+</pre></div>
+
+
+<p>where the annotation objects might be objects of type
+Parse, DependencyParse, TokenTagging, CommunicationTagging, etc.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">AnalyticUUIDGeneratorFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Factory for a compressible UUID generator.</span>
+
+<span class="sd">    One factory should be created per communication, and a new generator</span>
+<span class="sd">    should be created from that factory for each analytic processing the</span>
+<span class="sd">    communication.  Usually each program represents a single analytic,</span>
+<span class="sd">    so common usage is</span>
+
+<span class="sd">        augf = AnalyticUUIDGeneratorFactory(comm)</span>
+<span class="sd">        aug = augf.create()</span>
+<span class="sd">        for &lt;each annotation object created by this analytic&gt;:</span>
+<span class="sd">            annotation. = aug.next()</span>
+<span class="sd">            &lt;add annotation to communication&gt;</span>
+
+<span class="sd">    or if you&#39;re creating a new communication</span>
+
+<span class="sd">        augf = AnalyticUUIDGeneratorFactory()</span>
+<span class="sd">        aug = augf.create()</span>
+<span class="sd">        comm = &lt;create communication&gt;</span>
+<span class="sd">        comm.uuid = aug.next()</span>
+<span class="sd">        for &lt;each annotation object created by this analytic&gt;:</span>
+<span class="sd">            annotation. = aug.next()</span>
+<span class="sd">            &lt;add annotation to communication&gt;</span>
+
+<span class="sd">    where the annotation objects might be objects of type</span>
+<span class="sd">    Parse, DependencyParse, TokenTagging, CommunicationTagging, etc.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">comm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span> <span class="o">=</span> <span class="n">generate_uuid_unif</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span>
+
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create and return a UUID generator for a new analytic.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">_AnalyticUUIDGenerator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory">AnalyticUUIDGeneratorFactory</a></li>
+          <li>__builtin__.object</li>
+          </ul>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, comm=None)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">comm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span> <span class="o">=</span> <span class="n">generate_uuid_unif</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.create">
+    <p>def <span class="ident">create</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create and return a UUID generator for a new analytic.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.create', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.AnalyticUUIDGeneratorFactory.create" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create and return a UUID generator for a new analytic.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">_AnalyticUUIDGenerator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm_uuid</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="concrete.util.concrete_uuid.UUIDClustering" class="name">class <span class="ident">UUIDClustering</span></p>
+      
+  
+    <div class="desc"><p>Representation of the UUID instance clusters in a concrete
+communication (each cluster represents the set of nested members of
+the communication that reference or are identified by a given UUID).</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.UUIDClustering', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.UUIDClustering" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">UUIDClustering</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Representation of the UUID instance clusters in a concrete</span>
+<span class="sd">    communication (each cluster represents the set of nested members of</span>
+<span class="sd">    the communication that reference or are identified by a given UUID).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># map: UUID -&gt; set of nested members</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hashable_clusters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the set of unlabeled UUID clusters in a unique and</span>
+<span class="sd">        hashable format.  Two UUIDClusterings c1 and c2 are equivalent</span>
+<span class="sd">        (the two underlying communications&#39; UUID structures are</span>
+<span class="sd">        equivalent) if and only if:</span>
+
+<span class="sd">            c1.hashable_clusters() == c2.hashable_clusters()</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Search obj for UUIDs, calling _add_uuid_field when UUIDs are</span>
+<span class="sd">        found and calling _search on other object members.</span>
+<span class="sd">        When _search calls itself, prefix is appended with the object</span>
+<span class="sd">        member name, forming a uniquely identifiable tuple</span>
+<span class="sd">        representation of the path from the root object to a nested</span>
+<span class="sd">        object member.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_uuid_field</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">((</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">),))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;UUIDClustering does not support sets&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">((</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">),))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_filtered_getmembers</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">_add_uuid_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add UUID field f (a unique, hashable representation of the path</span>
+<span class="sd">        from the root communication to a nested UUID object) to the UUID</span>
+<span class="sd">        cluster indexed by UUID string u.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">f</span><span class="p">])</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#concrete.util.concrete_uuid.UUIDClustering">UUIDClustering</a></li>
+          <li>__builtin__.object</li>
+          </ul>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.UUIDClustering.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, comm)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.UUIDClustering.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.UUIDClustering.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># map: UUID -&gt; set of nested members</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.UUIDClustering.hashable_clusters">
+    <p>def <span class="ident">hashable_clusters</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Return the set of unlabeled UUID clusters in a unique and
+hashable format.  Two UUIDClusterings c1 and c2 are equivalent
+(the two underlying communications' UUID structures are
+equivalent) if and only if:</p>
+<div class="codehilite"><pre><span></span>c1.hashable_clusters() == c2.hashable_clusters()
+</pre></div></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.UUIDClustering.hashable_clusters', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.UUIDClustering.hashable_clusters" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">hashable_clusters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return the set of unlabeled UUID clusters in a unique and</span>
+<span class="sd">    hashable format.  Two UUIDClusterings c1 and c2 are equivalent</span>
+<span class="sd">    (the two underlying communications&#39; UUID structures are</span>
+<span class="sd">    equivalent) if and only if:</span>
+<span class="sd">        c1.hashable_clusters() == c2.hashable_clusters()</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="concrete.util.concrete_uuid.UUIDCompressor" class="name">class <span class="ident">UUIDCompressor</span></p>
+      
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.UUIDCompressor', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.UUIDCompressor" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">UUIDCompressor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_analytic</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_analytic</span> <span class="o">=</span> <span class="n">single_analytic</span>
+
+    <span class="k">def</span> <span class="nf">compress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="s1">&#39;Return a deep copy of comm with compressed UUIDs.&#39;</span>
+
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">communication_deep_copy</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">augs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuids</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuid_refs</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cc</span>
+
+    <span class="k">def</span> <span class="nf">_compress_uuids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="s1">&#39;Generate new UUIDs in &quot;uuid&quot; fields and save mapping&#39;</span>
+
+        <span class="n">tool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tool</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name_is_uuid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_uuid</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;uuid not instance of UUID&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>  <span class="c1"># we already took care of &quot;uuid&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">elt</span><span class="p">,</span> <span class="n">elt_name_is_uuid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuids</span><span class="p">(</span>
+                    <span class="n">elt</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="n">elt_name_is_uuid</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="n">tool</span>
+                <span class="p">),</span>
+                <span class="n">obj</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compress_uuid_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="s1">&#39;Update UUID references (not in &quot;uuid&quot; fields) using saved mapping&#39;</span>
+
+        <span class="n">tool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tool</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name_is_uuid</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">elt</span><span class="p">,</span> <span class="n">elt_name_is_uuid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuid_refs</span><span class="p">(</span>
+                    <span class="n">elt</span><span class="p">,</span> <span class="n">name_is_uuid</span><span class="o">=</span><span class="n">elt_name_is_uuid</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="n">tool</span>
+                <span class="p">),</span>
+                <span class="n">obj</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return tool for this object, given the parent tool;</span>
+<span class="sd">        update self.augs</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">AnnotationMetadata</span><span class="p">):</span>
+                <span class="n">tool</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">tool</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;metadata not instance of AnnotationMetadata&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_analytic</span><span class="p">:</span>
+            <span class="n">tool</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">tool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">augs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">augs</span><span class="p">[</span><span class="n">tool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">tool</span>
+
+    <span class="k">def</span> <span class="nf">_gen_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_uuid</span><span class="p">,</span> <span class="n">tool</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a new UUID for the provided tool, using self.augs;</span>
+<span class="sd">        update self.uuid_map</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">aug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">augs</span><span class="p">[</span><span class="n">tool</span><span class="p">]</span>
+        <span class="n">new_uuid</span> <span class="o">=</span> <span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">old_uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;encountered UUID </span><span class="si">%s</span><span class="s1"> twice, aborting&#39;</span> <span class="o">%</span>
+                             <span class="n">old_uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span><span class="p">[</span><span class="n">old_uuid</span><span class="o">.</span><span class="n">uuidString</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_uuid</span><span class="o">.</span><span class="n">uuidString</span>
+        <span class="k">return</span> <span class="n">new_uuid</span><span class="o">.</span><span class="n">uuidString</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_apply</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply f to the members of x if it is a basic container type,</span>
+<span class="sd">        otherwise apply f to x directly.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_fast_filtered_getmembers</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">f</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;uuid&#39;</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#concrete.util.concrete_uuid.UUIDCompressor">UUIDCompressor</a></li>
+          <li>__builtin__.object</li>
+          </ul>
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="concrete.util.concrete_uuid.UUIDCompressor.single_analytic" class="name">var <span class="ident">single_analytic</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.UUIDCompressor.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, single_analytic=False)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.UUIDCompressor.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.UUIDCompressor.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_analytic</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">single_analytic</span> <span class="o">=</span> <span class="n">single_analytic</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.concrete_uuid.UUIDCompressor.compress">
+    <p>def <span class="ident">compress</span>(</p><p>self, comm)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Return a deep copy of comm with compressed UUIDs.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.concrete_uuid.UUIDCompressor.compress', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.concrete_uuid.UUIDCompressor.compress" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">compress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+    <span class="s1">&#39;Return a deep copy of comm with compressed UUIDs.&#39;</span>
+    <span class="n">cc</span> <span class="o">=</span> <span class="n">communication_deep_copy</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">augs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">uuid_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuids</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_compress_uuid_refs</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cc</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
 
   </section>
 
@@ -1121,7 +2253,7 @@ table {
   <footer id="footer">
     <p>
       Documentation generated by
-      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.1</a>
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
     </p>
 
     <p>pdoc is in the public domain with the

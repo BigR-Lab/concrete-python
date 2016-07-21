@@ -554,7 +554,7 @@ table {
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
   body {
     background: #fff;
@@ -858,8 +858,10 @@ table {
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
 .codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
 .codehilite .gd { color: #A00000 } /* Generic.Deleted */
@@ -1064,7 +1066,7 @@ table {
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Convert Concrete objects to JSON strings</span>
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;Convert Concrete objects to JSON strings</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">json</span>
@@ -1072,23 +1074,31 @@ table {
 <span class="kn">from</span> <span class="nn">thrift</span> <span class="kn">import</span> <span class="n">TSerialization</span>
 <span class="kn">from</span> <span class="nn">thrift.protocol</span> <span class="kn">import</span> <span class="n">TJSONProtocol</span>
 
-<span class="kn">from</span> <span class="nn">concrete.util</span> <span class="kn">import</span> <span class="n">read_communication_from_file</span><span class="p">,</span> <span class="n">read_tokenlattice_from_file</span>
+<span class="kn">from</span> <span class="nn">concrete.util</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">read_communication_from_file</span><span class="p">,</span>
+    <span class="n">read_tokenlattice_from_file</span><span class="p">,</span>
+<span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">communication_file_to_json</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">remove_uuids</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">communication_file_to_json</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                               <span class="n">remove_uuids</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Communication</span>
 
 <span class="sd">    Args:</span>
 
 <span class="sd">    - `communication_filename`: String specifying Communication filename</span>
-<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be removed</span>
+<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be</span>
+<span class="sd">                      removed</span>
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Communication</span>
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the</span>
+<span class="sd">      Communication</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="n">remove_timestamps</span><span class="p">,</span> <span class="n">remove_uuids</span><span class="o">=</span><span class="n">remove_uuids</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="n">remove_timestamps</span><span class="p">,</span>
+                          <span class="n">remove_uuids</span><span class="o">=</span><span class="n">remove_uuids</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">tokenlattice_file_to_json</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a TokenLattice</span>
@@ -1099,7 +1109,8 @@ table {
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the TokenLattice</span>
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the</span>
+<span class="sd">      TokenLattice</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">toklat</span> <span class="o">=</span> <span class="n">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">toklat</span><span class="p">)</span>
@@ -1112,18 +1123,20 @@ table {
 
 <span class="sd">    Args:</span>
 
-<span class="sd">    - `json_object`: A Python data structure created from a JSON string by json.loads</span>
+<span class="sd">    - `json_object`: A Python data structure created from a JSON string by</span>
+<span class="sd">                     json.loads</span>
 
 <span class="sd">    Returns:</span>
 
 <span class="sd">    - A copy of the input data structure with all timestamp objects removed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span><span class="p">]</span>
+        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">json_object</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">&quot;timestamp&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span>
                 <span class="n">new_json_object</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="n">json_object</span>
@@ -1138,19 +1151,21 @@ table {
 
 <span class="sd">    Args:</span>
 
-<span class="sd">    - `json_object`: A Python data structure created from a JSON string by json.loads</span>
+<span class="sd">    - `json_object`: A Python data structure created from a JSON string by</span>
+<span class="sd">                     json.loads</span>
 
 <span class="sd">    Returns:</span>
 
 <span class="sd">    - A copy of the input data structure with all UUID objects removed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span>
-                           <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span>
+                           <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s1">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">json_object</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s1">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
                 <span class="n">new_json_object</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="n">json_object</span>
@@ -1164,13 +1179,16 @@ table {
 <span class="sd">    Args:</span>
 
 <span class="sd">    - `tobj`: A Thrift object</span>
-<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be removed</span>
+<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be</span>
+<span class="sd">                      removed</span>
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Thrift object</span>
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Thrift</span>
+<span class="sd">      object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">thrift_json_string</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">tobj</span><span class="p">,</span> <span class="n">TJSONProtocol</span><span class="o">.</span><span class="n">TSimpleJSONProtocolFactory</span><span class="p">())</span>
+    <span class="n">thrift_json_string</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">tobj</span><span class="p">,</span> <span class="n">TJSONProtocol</span><span class="o">.</span><span class="n">TSimpleJSONProtocolFactory</span><span class="p">())</span>
     <span class="n">thrift_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">thrift_json_string</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">remove_timestamps</span><span class="p">:</span>
@@ -1178,7 +1196,8 @@ table {
     <span class="k">if</span> <span class="n">remove_uuids</span><span class="p">:</span>
         <span class="n">thrift_json</span> <span class="o">=</span> <span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">thrift_json</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">thrift_json</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="s">&#39;: &#39;</span><span class="p">),</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">thrift_json</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;: &#39;</span><span class="p">),</span>
+                      <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1201,29 +1220,35 @@ table {
 <p>Args:</p>
 <ul>
 <li><code>communication_filename</code>: String specifying Communication filename</li>
-<li><code>remove_uuids</code>: Boolean flag indicating if Concrete UUIDs should be removed</li>
+<li><code>remove_uuids</code>: Boolean flag indicating if Concrete UUIDs should be
+                  removed</li>
 </ul>
 <p>Returns:</p>
 <ul>
-<li>A string containing a "pretty-printed" JSON representation of the Communication</li>
+<li>A string containing a "pretty-printed" JSON representation of the
+  Communication</li>
 </ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.communication_file_to_json', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.communication_file_to_json" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">communication_file_to_json</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">remove_uuids</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">communication_file_to_json</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                               <span class="n">remove_uuids</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Communication</span>
 
 <span class="sd">    Args:</span>
 
 <span class="sd">    - `communication_filename`: String specifying Communication filename</span>
-<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be removed</span>
+<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be</span>
+<span class="sd">                      removed</span>
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Communication</span>
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the</span>
+<span class="sd">      Communication</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="n">remove_timestamps</span><span class="p">,</span> <span class="n">remove_uuids</span><span class="o">=</span><span class="n">remove_uuids</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="n">remove_timestamps</span><span class="p">,</span>
+                          <span class="n">remove_uuids</span><span class="o">=</span><span class="n">remove_uuids</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1245,7 +1270,8 @@ representations of Concrete Metadata timestamps (dictionary keys
 with value 'timestamp') recursively removed.</p>
 <p>Args:</p>
 <ul>
-<li><code>json_object</code>: A Python data structure created from a JSON string by json.loads</li>
+<li><code>json_object</code>: A Python data structure created from a JSON string by
+                 json.loads</li>
 </ul>
 <p>Returns:</p>
 <ul>
@@ -1254,25 +1280,27 @@ with value 'timestamp') recursively removed.</p>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.get_json_object_without_timestamps', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.get_json_object_without_timestamps" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">json_object</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">json_object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a copy of a JSON object created by json.loads(), with all</span>
 <span class="sd">    representations of Concrete Metadata timestamps (dictionary keys</span>
 <span class="sd">    with value &#39;timestamp&#39;) recursively removed.</span>
 
 <span class="sd">    Args:</span>
 
-<span class="sd">    - `json_object`: A Python data structure created from a JSON string by json.loads</span>
+<span class="sd">    - `json_object`: A Python data structure created from a JSON string by</span>
+<span class="sd">                     json.loads</span>
 
 <span class="sd">    Returns:</span>
 
 <span class="sd">    - A copy of the input data structure with all timestamp objects removed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span><span class="p">]</span>
+        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">json_object</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">&quot;timestamp&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span>
                 <span class="n">new_json_object</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_json_object_without_timestamps</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="n">json_object</span>
@@ -1299,7 +1327,8 @@ representations of Concrete UUIDs (dictionaries containing a
 'uuidString' key) recursively removed.</p>
 <p>Args:</p>
 <ul>
-<li><code>json_object</code>: A Python data structure created from a JSON string by json.loads</li>
+<li><code>json_object</code>: A Python data structure created from a JSON string by
+                 json.loads</li>
 </ul>
 <p>Returns:</p>
 <ul>
@@ -1308,26 +1337,28 @@ representations of Concrete UUIDs (dictionaries containing a
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.get_json_object_without_uuids', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.get_json_object_without_uuids" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">get_json_object_without_uuids</span><span class="p">(</span><span class="n">json_object</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_json_object_without_uuids</span><span class="p">(</span><span class="n">json_object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a copy of a JSON object created by json.loads(), with all</span>
 <span class="sd">    representations of Concrete UUIDs (dictionaries containing a</span>
 <span class="sd">    &#39;uuidString&#39; key) recursively removed.</span>
 
 <span class="sd">    Args:</span>
 
-<span class="sd">    - `json_object`: A Python data structure created from a JSON string by json.loads</span>
+<span class="sd">    - `json_object`: A Python data structure created from a JSON string by</span>
+<span class="sd">                     json.loads</span>
 
 <span class="sd">    Returns:</span>
 
 <span class="sd">    - A copy of the input data structure with all UUID objects removed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span>
-                           <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+        <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">json_object</span>
+                           <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s1">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">json_object</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">json_object</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="s1">&#39;uuidString&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
                 <span class="n">new_json_object</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">new_json_object</span> <span class="o">=</span> <span class="n">json_object</span>
@@ -1353,28 +1384,33 @@ representations of Concrete UUIDs (dictionaries containing a
 <p>Args:</p>
 <ul>
 <li><code>tobj</code>: A Thrift object</li>
-<li><code>remove_uuids</code>: Boolean flag indicating if Concrete UUIDs should be removed</li>
+<li><code>remove_uuids</code>: Boolean flag indicating if Concrete UUIDs should be
+                  removed</li>
 </ul>
 <p>Returns:</p>
 <ul>
-<li>A string containing a "pretty-printed" JSON representation of the Thrift object</li>
+<li>A string containing a "pretty-printed" JSON representation of the Thrift
+  object</li>
 </ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.thrift_to_json', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.thrift_to_json" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">thrift_to_json</span><span class="p">(</span><span class="n">tobj</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">remove_uuids</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">thrift_to_json</span><span class="p">(</span><span class="n">tobj</span><span class="p">,</span> <span class="n">remove_timestamps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">remove_uuids</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a Thrift object</span>
 
 <span class="sd">    Args:</span>
 
 <span class="sd">    - `tobj`: A Thrift object</span>
-<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be removed</span>
+<span class="sd">    - `remove_uuids`: Boolean flag indicating if Concrete UUIDs should be</span>
+<span class="sd">                      removed</span>
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Thrift object</span>
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the Thrift</span>
+<span class="sd">      object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">thrift_json_string</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">tobj</span><span class="p">,</span> <span class="n">TJSONProtocol</span><span class="o">.</span><span class="n">TSimpleJSONProtocolFactory</span><span class="p">())</span>
+    <span class="n">thrift_json_string</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">tobj</span><span class="p">,</span> <span class="n">TJSONProtocol</span><span class="o">.</span><span class="n">TSimpleJSONProtocolFactory</span><span class="p">())</span>
     <span class="n">thrift_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">thrift_json_string</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">remove_timestamps</span><span class="p">:</span>
@@ -1382,7 +1418,8 @@ representations of Concrete UUIDs (dictionaries containing a
     <span class="k">if</span> <span class="n">remove_uuids</span><span class="p">:</span>
         <span class="n">thrift_json</span> <span class="o">=</span> <span class="n">get_json_object_without_uuids</span><span class="p">(</span><span class="n">thrift_json</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">thrift_json</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="s">&#39;: &#39;</span><span class="p">),</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">thrift_json</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;: &#39;</span><span class="p">),</span>
+                      <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1406,12 +1443,13 @@ representations of Concrete UUIDs (dictionaries containing a
 </ul>
 <p>Returns:</p>
 <ul>
-<li>A string containing a "pretty-printed" JSON representation of the TokenLattice</li>
+<li>A string containing a "pretty-printed" JSON representation of the
+  TokenLattice</li>
 </ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.json_fu.tokenlattice_file_to_json', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.json_fu.tokenlattice_file_to_json" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">tokenlattice_file_to_json</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">tokenlattice_file_to_json</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get a &quot;pretty-printed&quot; JSON string representation for a TokenLattice</span>
 
 <span class="sd">    Args:</span>
@@ -1420,7 +1458,8 @@ representations of Concrete UUIDs (dictionaries containing a
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the TokenLattice</span>
+<span class="sd">    - A string containing a &quot;pretty-printed&quot; JSON representation of the</span>
+<span class="sd">      TokenLattice</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">toklat</span> <span class="o">=</span> <span class="n">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">toklat_filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">thrift_to_json</span><span class="p">(</span><span class="n">toklat</span><span class="p">)</span>
@@ -1440,7 +1479,7 @@ representations of Concrete UUIDs (dictionaries containing a
   <footer id="footer">
     <p>
       Documentation generated by
-      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.1</a>
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
     </p>
 
     <p>pdoc is in the public domain with the

@@ -556,7 +556,7 @@ table {
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
   body {
     background: #fff;
@@ -860,8 +860,10 @@ table {
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
 .codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
 .codehilite .gd { color: #A00000 } /* Generic.Deleted */
@@ -1039,6 +1041,9 @@ table {
     <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
       
   <ul>
+    <li class="mono"><a href="#concrete.util.twitter.CREATED_AT_FORMAT">CREATED_AT_FORMAT</a></li>
+    <li class="mono"><a href="#concrete.util.twitter.EPOCH">EPOCH</a></li>
+    <li class="mono"><a href="#concrete.util.twitter.ISO_LANGS">ISO_LANGS</a></li>
     <li class="mono"><a href="#concrete.util.twitter.TOOL_NAME">TOOL_NAME</a></li>
     <li class="mono"><a href="#concrete.util.twitter.TWEET_TYPE">TWEET_TYPE</a></li>
   </ul>
@@ -1048,10 +1053,13 @@ table {
     <li class="set"><h3><a href="#header-functions">Functions</a></h3>
       
   <ul>
+    <li class="mono"><a href="#concrete.util.twitter.capture_tweet_lid">capture_tweet_lid</a></li>
     <li class="mono"><a href="#concrete.util.twitter.json_tweet_object_to_Communication">json_tweet_object_to_Communication</a></li>
     <li class="mono"><a href="#concrete.util.twitter.json_tweet_object_to_TweetInfo">json_tweet_object_to_TweetInfo</a></li>
     <li class="mono"><a href="#concrete.util.twitter.json_tweet_string_to_Communication">json_tweet_string_to_Communication</a></li>
     <li class="mono"><a href="#concrete.util.twitter.json_tweet_string_to_TweetInfo">json_tweet_string_to_TweetInfo</a></li>
+    <li class="mono"><a href="#concrete.util.twitter.twitter_lid_to_iso639_3">twitter_lid_to_iso639_3</a></li>
+    <li class="mono"><a href="#concrete.util.twitter.unix_time">unix_time</a></li>
   </ul>
 
     </li>
@@ -1075,7 +1083,7 @@ table {
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.twitter" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Convert between JSON and Concrete representations of Tweets</span>
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;Convert between JSON and Concrete representations of Tweets</span>
 
 <span class="sd">The fields used by the Twitter API are documented at:</span>
 
@@ -1084,8 +1092,9 @@ table {
 
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">pycountry</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">from</span> <span class="nn">concrete</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AnnotationMetadata</span><span class="p">,</span>
@@ -1093,6 +1102,7 @@ table {
     <span class="n">Communication</span><span class="p">,</span>
     <span class="n">CommunicationMetadata</span><span class="p">,</span>
     <span class="n">HashTag</span><span class="p">,</span>
+    <span class="n">LanguageIdentification</span><span class="p">,</span>
     <span class="n">PlaceAttributes</span><span class="p">,</span>
     <span class="n">TweetInfo</span><span class="p">,</span>
     <span class="n">TwitterCoordinates</span><span class="p">,</span>
@@ -1104,17 +1114,38 @@ table {
     <span class="n">UserMention</span>
 <span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">concrete.util</span> <span class="kn">import</span> <span class="n">generate_UUID</span>
+<span class="kn">from</span> <span class="nn">concrete.util.concrete_uuid</span> <span class="kn">import</span> <span class="n">AnalyticUUIDGeneratorFactory</span>
 
 
-<span class="n">TOOL_NAME</span> <span class="o">=</span> <span class="s">&quot;Python module concrete.util.twitter&quot;</span>
-<span class="n">TWEET_TYPE</span> <span class="o">=</span> <span class="s">&quot;Tweet&quot;</span>
+<span class="n">TOOL_NAME</span> <span class="o">=</span> <span class="s2">&quot;Python module concrete.util.twitter&quot;</span>
+<span class="n">TWEET_TYPE</span> <span class="o">=</span> <span class="s2">&quot;Tweet&quot;</span>
+<span class="n">ISO_LANGS</span> <span class="o">=</span> <span class="n">pycountry</span><span class="o">.</span><span class="n">languages</span>
+<span class="n">CREATED_AT_FORMAT</span> <span class="o">=</span> <span class="s1">&#39;%a %b </span><span class="si">%d</span><span class="s1"> %H:%M:%S +0000 %Y&#39;</span>
+<span class="n">EPOCH</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">unix_time</span><span class="p">(</span><span class="n">dt</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Source:</span>
+<span class="sd">    http://stackoverflow.com/questions/6999726/how-can-i-convert-a-datetime-object-to-milliseconds-since-epoch-unix-time-in-p</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">dt</span> <span class="o">-</span> <span class="n">EPOCH</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">())</span>
+
 
 <span class="k">def</span> <span class="nf">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">tweet</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">tweet_info</span> <span class="o">=</span> <span class="n">json_tweet_object_to_TweetInfo</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
 
+    <span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">()</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;id_str&#39;</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">:</span>
+        <span class="n">tweet_id</span> <span class="o">=</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">&#39;id_str&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Tweet has no id_str, leaving communication id blank&#39;</span><span class="p">)</span>
+        <span class="n">tweet_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">tweet_time</span> <span class="o">=</span> <span class="n">unix_time</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">createdAt</span><span class="p">,</span>
+                                             <span class="n">CREATED_AT_FORMAT</span><span class="p">))</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">(</span>
         <span class="n">communicationMetadata</span><span class="o">=</span><span class="n">CommunicationMetadata</span><span class="p">(</span>
             <span class="n">tweetInfo</span><span class="o">=</span><span class="n">tweet_info</span><span class="p">),</span>
@@ -1122,9 +1153,20 @@ table {
             <span class="n">tool</span><span class="o">=</span><span class="n">TOOL_NAME</span><span class="p">,</span>
             <span class="n">timestamp</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())),</span>
         <span class="n">originalText</span><span class="o">=</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">TWEET_TYPE</span><span class="p">,</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">()</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="n">startTime</span><span class="o">=</span><span class="n">tweet_time</span><span class="p">,</span>
+        <span class="n">endTime</span><span class="o">=</span><span class="n">tweet_time</span><span class="p">,</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">tweet_id</span>
     <span class="p">)</span>
+
+    <span class="c1"># either this, or pass in gen as parameter to fx</span>
+    <span class="c1"># latter is more annoying to test but slightly cleaner</span>
+    <span class="k">if</span> <span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span><span class="o">.</span><span class="n">uuid</span> <span class="o">=</span> <span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="n">lidList</span> <span class="o">=</span> <span class="p">[</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span><span class="p">]</span>
+        <span class="n">comm</span><span class="o">.</span><span class="n">lidList</span> <span class="o">=</span> <span class="n">lidList</span>
     <span class="k">return</span> <span class="n">comm</span>
 
 
@@ -1135,16 +1177,14 @@ table {
 <span class="sd">    Returns:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">snake_case_to_camelcase</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Implementation copied from:</span>
-
-<span class="sd">             http://stackoverflow.com/questions/4303492/how-can-i-simplify-this-conversion-from-underscore-to-camelcase-in-python</span>
+        <span class="sd">&quot;&quot;&quot;Implementation copied from: http://goo.gl/SSgo9k</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">def</span> <span class="nf">camelcase</span><span class="p">():</span>
             <span class="k">yield</span> <span class="nb">unicode</span><span class="o">.</span><span class="n">lower</span>
             <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="nb">unicode</span><span class="o">.</span><span class="n">capitalize</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">camelcase</span><span class="p">()</span>
-        <span class="k">return</span> <span class="s">u&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">next</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="k">else</span> <span class="s">u&#39;_&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">u&quot;_&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s2">u&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">next</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="k">else</span> <span class="s1">u&#39;_&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">u&quot;_&quot;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">set_flat_fields</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">,</span> <span class="n">twitter_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Copy data from the dictionary for the Twitter object to the</span>
@@ -1160,70 +1200,119 @@ table {
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">,</span> <span class="n">camelcased_key</span><span class="p">):</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">,</span> <span class="n">camelcased_key</span><span class="p">,</span> <span class="n">twitter_dict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Concrete schema for &#39;</span><span class="si">%s</span><span class="s">&#39; missing field for Twitter API field &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
-                                 <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Concrete schema for &#39;</span><span class="si">%s</span><span class="s2">&#39; missing field &quot;</span>
+                                  <span class="s2">&quot;for Twitter API field &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span>
+                                  <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
 
     <span class="n">tweet_info</span> <span class="o">=</span> <span class="n">TweetInfo</span><span class="p">()</span>
     <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">tweet_info</span><span class="p">,</span> <span class="n">tweet</span><span class="p">)</span>
 
     <span class="n">twitter_user</span> <span class="o">=</span> <span class="n">TwitterUser</span><span class="p">()</span>
-    <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_user</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;user&#39;</span><span class="p">])</span>
+    <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_user</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;user&#39;</span><span class="p">])</span>
     <span class="n">tweet_info</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">twitter_user</span>
 
-    <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">]:</span>
         <span class="n">twitter_entities</span> <span class="o">=</span> <span class="n">TwitterEntities</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;hashtags&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;hashtags&#39;</span><span class="p">]:</span>
             <span class="n">twitter_entities</span><span class="o">.</span><span class="n">hashtagList</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">hashtag_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;hashtags&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">hashtag_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;hashtags&#39;</span><span class="p">]:</span>
                 <span class="n">hashtag</span> <span class="o">=</span> <span class="n">HashTag</span><span class="p">()</span>
                 <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">hashtag</span><span class="p">,</span> <span class="n">hashtag_dict</span><span class="p">)</span>
                 <span class="n">twitter_entities</span><span class="o">.</span><span class="n">hashtagList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashtag</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;urls&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;urls&#39;</span><span class="p">]:</span>
             <span class="n">twitter_entities</span><span class="o">.</span><span class="n">urlList</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">url_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;urls&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">url_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;urls&#39;</span><span class="p">]:</span>
                 <span class="n">url</span> <span class="o">=</span> <span class="n">URL</span><span class="p">()</span>
                 <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">url_dict</span><span class="p">)</span>
                 <span class="n">twitter_entities</span><span class="o">.</span><span class="n">urlList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;user_mentions&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;user_mentions&#39;</span><span class="p">]:</span>
             <span class="n">twitter_entities</span><span class="o">.</span><span class="n">userMentionList</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">user_mention_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;user_mentions&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">user_mention_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;user_mentions&#39;</span><span class="p">]:</span>
                 <span class="n">user_mention</span> <span class="o">=</span> <span class="n">UserMention</span><span class="p">()</span>
                 <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">user_mention</span><span class="p">,</span> <span class="n">user_mention_dict</span><span class="p">)</span>
                 <span class="n">twitter_entities</span><span class="o">.</span><span class="n">userMentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_mention</span><span class="p">)</span>
         <span class="n">tweet_info</span><span class="o">.</span><span class="n">entities</span> <span class="o">=</span> <span class="n">twitter_entities</span>
 
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">]:</span>
             <span class="n">tweet_coordinates</span> <span class="o">=</span> <span class="n">TwitterCoordinates</span><span class="p">()</span>
-            <span class="n">tweet_coordinates</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s">&#39;type&#39;</span><span class="p">]</span>
+            <span class="n">tweet_coordinates</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
             <span class="n">tweet_coordinates</span><span class="o">.</span><span class="n">coordinates</span> <span class="o">=</span> <span class="n">TwitterLatLong</span><span class="p">(</span>
-                <span class="n">latitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-                <span class="n">longitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">latitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">longitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">tweet_info</span><span class="o">.</span><span class="n">coordinates</span> <span class="o">=</span> <span class="n">tweet_coordinates</span>
 
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">]:</span>
             <span class="n">twitter_place</span> <span class="o">=</span> <span class="n">TwitterPlace</span><span class="p">()</span>
-            <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_place</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;bounding_box&#39;</span><span class="p">]:</span>
+            <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_place</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;bounding_box&#39;</span><span class="p">]:</span>
                 <span class="n">bounding_box</span> <span class="o">=</span> <span class="n">BoundingBox</span><span class="p">()</span>
-                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;bounding_box&#39;</span><span class="p">])</span>
+                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;bounding_box&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">bounding_box</span><span class="o">.</span><span class="n">coordinateList</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">bounding_box</span><span class="o">.</span><span class="n">coordinateList</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="n">twitter_place</span><span class="o">.</span><span class="n">boundingBox</span> <span class="o">=</span> <span class="n">bounding_box</span>
-            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;attributes&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;attributes&#39;</span><span class="p">]:</span>
                 <span class="n">place_attributes</span> <span class="o">=</span> <span class="n">PlaceAttributes</span><span class="p">()</span>
-                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">place_attributes</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;attributes&#39;</span><span class="p">])</span>
+                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">place_attributes</span><span class="p">,</span>
+                                <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;attributes&#39;</span><span class="p">])</span>
                 <span class="n">twitter_place</span><span class="o">.</span><span class="n">attributes</span> <span class="o">=</span> <span class="n">place_attributes</span>
             <span class="n">tweet_info</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">twitter_place</span>
 
+    <span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span> <span class="o">=</span> <span class="n">capture_tweet_lid</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">tweet_info</span>
 
 
-<span class="k">def</span> <span class="nf">json_tweet_string_to_Communication</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">):</span>
-    <span class="n">tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">json_tweet_string_to_Communication</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">,</span> <span class="n">check_empty</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                       <span class="n">check_delete</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">json_tweet_string</span> <span class="o">=</span> <span class="n">json_tweet_string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">check_empty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">json_tweet_string</span><span class="p">:</span>
+        <span class="n">json_tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">check_delete</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">json_tweet</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,):</span>
+            <span class="k">return</span> <span class="n">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">json_tweet</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
 
 
 <span class="k">def</span> <span class="nf">json_tweet_string_to_TweetInfo</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">):</span>
     <span class="n">tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">json_tweet_object_to_TweetInfo</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">capture_tweet_lid</span><span class="p">(</span><span class="n">twitter_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Attempts to capture the &#39;lang&#39; field in the twitter API, if it</span>
+<span class="sd">    exists.</span>
+
+<span class="sd">    Returns a list of LanguageIdentification objects, or None if the</span>
+<span class="sd">    field is not present in the tweet json.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">u&#39;lang&#39;</span> <span class="ow">in</span> <span class="n">twitter_dict</span><span class="p">:</span>
+        <span class="n">amd</span> <span class="o">=</span> <span class="n">AnnotationMetadata</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="s2">&quot;Twitter LID&quot;</span><span class="p">,</span>
+                                 <span class="n">timestamp</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()),</span>
+                                 <span class="n">kBest</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">kvs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">kvs</span><span class="p">[</span><span class="n">twitter_lid_to_iso639_3</span><span class="p">(</span><span class="n">twitter_dict</span><span class="p">[</span><span class="s1">u&#39;lang&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">LanguageIdentification</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">amd</span><span class="p">,</span>
+                                      <span class="n">languageToProbabilityMap</span><span class="o">=</span><span class="n">kvs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+
+<span class="k">def</span> <span class="nf">twitter_lid_to_iso639_3</span><span class="p">(</span><span class="n">twitter_lid</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ref: https://dev.twitter.com/rest/reference/get/help/languages</span>
+
+<span class="sd">    This can be an iso639-3 code (no-op), iso639-1 2-letter abbr</span>
+<span class="sd">    (converted to 3), or combo (split by &#39;-&#39;, then first part converted)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">twitter_lid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ISO_LANGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">iso639_1_code</span><span class="o">=</span><span class="n">twitter_lid</span><span class="p">)</span><span class="o">.</span><span class="n">iso639_3_code</span>
+    <span class="k">elif</span> <span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">twitter_lid</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">twitter_lid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">spl</span> <span class="o">=</span> <span class="n">twitter_lid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ISO_LANGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">iso639_1_code</span><span class="o">=</span><span class="n">spl</span><span class="p">)</span><span class="o">.</span><span class="n">iso639_3_code</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">twitter_lid</span>
 </pre></div>
 
   </div>
@@ -1232,6 +1321,30 @@ table {
 
   <section id="section-items">
     <h2 class="section-title" id="header-variables">Module variables</h2>
+      <div class="item">
+      <p id="concrete.util.twitter.CREATED_AT_FORMAT" class="name">var <span class="ident">CREATED_AT_FORMAT</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="concrete.util.twitter.EPOCH" class="name">var <span class="ident">EPOCH</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="concrete.util.twitter.ISO_LANGS" class="name">var <span class="ident">ISO_LANGS</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
       <div class="item">
       <p id="concrete.util.twitter.TOOL_NAME" class="name">var <span class="ident">TOOL_NAME</span></p>
       
@@ -1252,6 +1365,47 @@ table {
     <h2 class="section-title" id="header-functions">Functions</h2>
       
   <div class="item">
+    <div class="name def" id="concrete.util.twitter.capture_tweet_lid">
+    <p>def <span class="ident">capture_tweet_lid</span>(</p><p>twitter_dict)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Attempts to capture the 'lang' field in the twitter API, if it
+exists.</p>
+<p>Returns a list of LanguageIdentification objects, or None if the
+field is not present in the tweet json.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.capture_tweet_lid', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.twitter.capture_tweet_lid" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">capture_tweet_lid</span><span class="p">(</span><span class="n">twitter_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Attempts to capture the &#39;lang&#39; field in the twitter API, if it</span>
+<span class="sd">    exists.</span>
+
+<span class="sd">    Returns a list of LanguageIdentification objects, or None if the</span>
+<span class="sd">    field is not present in the tweet json.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">u&#39;lang&#39;</span> <span class="ow">in</span> <span class="n">twitter_dict</span><span class="p">:</span>
+        <span class="n">amd</span> <span class="o">=</span> <span class="n">AnnotationMetadata</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="s2">&quot;Twitter LID&quot;</span><span class="p">,</span>
+                                 <span class="n">timestamp</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()),</span>
+                                 <span class="n">kBest</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">kvs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">kvs</span><span class="p">[</span><span class="n">twitter_lid_to_iso639_3</span><span class="p">(</span><span class="n">twitter_dict</span><span class="p">[</span><span class="s1">u&#39;lang&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">LanguageIdentification</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">amd</span><span class="p">,</span>
+                                      <span class="n">languageToProbabilityMap</span><span class="o">=</span><span class="n">kvs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
     <div class="name def" id="concrete.util.twitter.json_tweet_object_to_Communication">
     <p>def <span class="ident">json_tweet_object_to_Communication</span>(</p><p>tweet)</p>
     </div>
@@ -1262,11 +1416,20 @@ table {
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.json_tweet_object_to_Communication', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.twitter.json_tweet_object_to_Communication" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">tweet</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">tweet</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">tweet_info</span> <span class="o">=</span> <span class="n">json_tweet_object_to_TweetInfo</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
 
+    <span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">()</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;id_str&#39;</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">:</span>
+        <span class="n">tweet_id</span> <span class="o">=</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">&#39;id_str&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Tweet has no id_str, leaving communication id blank&#39;</span><span class="p">)</span>
+        <span class="n">tweet_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">tweet_time</span> <span class="o">=</span> <span class="n">unix_time</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">createdAt</span><span class="p">,</span>
+                                             <span class="n">CREATED_AT_FORMAT</span><span class="p">))</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">(</span>
         <span class="n">communicationMetadata</span><span class="o">=</span><span class="n">CommunicationMetadata</span><span class="p">(</span>
             <span class="n">tweetInfo</span><span class="o">=</span><span class="n">tweet_info</span><span class="p">),</span>
@@ -1274,9 +1437,20 @@ table {
             <span class="n">tool</span><span class="o">=</span><span class="n">TOOL_NAME</span><span class="p">,</span>
             <span class="n">timestamp</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())),</span>
         <span class="n">originalText</span><span class="o">=</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">TWEET_TYPE</span><span class="p">,</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">()</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="n">startTime</span><span class="o">=</span><span class="n">tweet_time</span><span class="p">,</span>
+        <span class="n">endTime</span><span class="o">=</span><span class="n">tweet_time</span><span class="p">,</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">tweet_id</span>
     <span class="p">)</span>
+
+    <span class="c1"># either this, or pass in gen as parameter to fx</span>
+    <span class="c1"># latter is more annoying to test but slightly cleaner</span>
+    <span class="k">if</span> <span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span><span class="o">.</span><span class="n">uuid</span> <span class="o">=</span> <span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="n">lidList</span> <span class="o">=</span> <span class="p">[</span><span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span><span class="p">]</span>
+        <span class="n">comm</span><span class="o">.</span><span class="n">lidList</span> <span class="o">=</span> <span class="n">lidList</span>
     <span class="k">return</span> <span class="n">comm</span>
 </pre></div>
 
@@ -1299,23 +1473,21 @@ table {
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.json_tweet_object_to_TweetInfo', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.twitter.json_tweet_object_to_TweetInfo" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">json_tweet_object_to_TweetInfo</span><span class="p">(</span><span class="n">tweet</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">json_tweet_object_to_TweetInfo</span><span class="p">(</span><span class="n">tweet</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Args:</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">snake_case_to_camelcase</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Implementation copied from:</span>
-
-<span class="sd">             http://stackoverflow.com/questions/4303492/how-can-i-simplify-this-conversion-from-underscore-to-camelcase-in-python</span>
+        <span class="sd">&quot;&quot;&quot;Implementation copied from: http://goo.gl/SSgo9k</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">def</span> <span class="nf">camelcase</span><span class="p">():</span>
             <span class="k">yield</span> <span class="nb">unicode</span><span class="o">.</span><span class="n">lower</span>
             <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="nb">unicode</span><span class="o">.</span><span class="n">capitalize</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">camelcase</span><span class="p">()</span>
-        <span class="k">return</span> <span class="s">u&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">next</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="k">else</span> <span class="s">u&#39;_&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">u&quot;_&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s2">u&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">next</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="k">else</span> <span class="s1">u&#39;_&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">u&quot;_&quot;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">set_flat_fields</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">,</span> <span class="n">twitter_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Copy data from the dictionary for the Twitter object to the</span>
@@ -1331,59 +1503,64 @@ table {
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">,</span> <span class="n">camelcased_key</span><span class="p">):</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">,</span> <span class="n">camelcased_key</span><span class="p">,</span> <span class="n">twitter_dict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Concrete schema for &#39;</span><span class="si">%s</span><span class="s">&#39; missing field for Twitter API field &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
-                                 <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Concrete schema for &#39;</span><span class="si">%s</span><span class="s2">&#39; missing field &quot;</span>
+                                  <span class="s2">&quot;for Twitter API field &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span>
+                                  <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">concrete_object</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
 
     <span class="n">tweet_info</span> <span class="o">=</span> <span class="n">TweetInfo</span><span class="p">()</span>
     <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">tweet_info</span><span class="p">,</span> <span class="n">tweet</span><span class="p">)</span>
 
     <span class="n">twitter_user</span> <span class="o">=</span> <span class="n">TwitterUser</span><span class="p">()</span>
-    <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_user</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;user&#39;</span><span class="p">])</span>
+    <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_user</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;user&#39;</span><span class="p">])</span>
     <span class="n">tweet_info</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">twitter_user</span>
 
-    <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">]:</span>
         <span class="n">twitter_entities</span> <span class="o">=</span> <span class="n">TwitterEntities</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;hashtags&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;hashtags&#39;</span><span class="p">]:</span>
             <span class="n">twitter_entities</span><span class="o">.</span><span class="n">hashtagList</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">hashtag_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;hashtags&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">hashtag_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;hashtags&#39;</span><span class="p">]:</span>
                 <span class="n">hashtag</span> <span class="o">=</span> <span class="n">HashTag</span><span class="p">()</span>
                 <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">hashtag</span><span class="p">,</span> <span class="n">hashtag_dict</span><span class="p">)</span>
                 <span class="n">twitter_entities</span><span class="o">.</span><span class="n">hashtagList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashtag</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;urls&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;urls&#39;</span><span class="p">]:</span>
             <span class="n">twitter_entities</span><span class="o">.</span><span class="n">urlList</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">url_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;urls&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">url_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;urls&#39;</span><span class="p">]:</span>
                 <span class="n">url</span> <span class="o">=</span> <span class="n">URL</span><span class="p">()</span>
                 <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">url_dict</span><span class="p">)</span>
                 <span class="n">twitter_entities</span><span class="o">.</span><span class="n">urlList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;user_mentions&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;user_mentions&#39;</span><span class="p">]:</span>
             <span class="n">twitter_entities</span><span class="o">.</span><span class="n">userMentionList</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">user_mention_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;entities&#39;</span><span class="p">][</span><span class="s">u&#39;user_mentions&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">user_mention_dict</span> <span class="ow">in</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;entities&#39;</span><span class="p">][</span><span class="s1">u&#39;user_mentions&#39;</span><span class="p">]:</span>
                 <span class="n">user_mention</span> <span class="o">=</span> <span class="n">UserMention</span><span class="p">()</span>
                 <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">user_mention</span><span class="p">,</span> <span class="n">user_mention_dict</span><span class="p">)</span>
                 <span class="n">twitter_entities</span><span class="o">.</span><span class="n">userMentionList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_mention</span><span class="p">)</span>
         <span class="n">tweet_info</span><span class="o">.</span><span class="n">entities</span> <span class="o">=</span> <span class="n">twitter_entities</span>
 
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">]:</span>
             <span class="n">tweet_coordinates</span> <span class="o">=</span> <span class="n">TwitterCoordinates</span><span class="p">()</span>
-            <span class="n">tweet_coordinates</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s">&#39;type&#39;</span><span class="p">]</span>
+            <span class="n">tweet_coordinates</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
             <span class="n">tweet_coordinates</span><span class="o">.</span><span class="n">coordinates</span> <span class="o">=</span> <span class="n">TwitterLatLong</span><span class="p">(</span>
-                <span class="n">latitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-                <span class="n">longitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">latitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">longitude</span><span class="o">=</span><span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="s1">u&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">tweet_info</span><span class="o">.</span><span class="n">coordinates</span> <span class="o">=</span> <span class="n">tweet_coordinates</span>
 
-        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">]:</span>
             <span class="n">twitter_place</span> <span class="o">=</span> <span class="n">TwitterPlace</span><span class="p">()</span>
-            <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_place</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;bounding_box&#39;</span><span class="p">]:</span>
+            <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">twitter_place</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;bounding_box&#39;</span><span class="p">]:</span>
                 <span class="n">bounding_box</span> <span class="o">=</span> <span class="n">BoundingBox</span><span class="p">()</span>
-                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;bounding_box&#39;</span><span class="p">])</span>
+                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;bounding_box&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">bounding_box</span><span class="o">.</span><span class="n">coordinateList</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">bounding_box</span><span class="o">.</span><span class="n">coordinateList</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="n">twitter_place</span><span class="o">.</span><span class="n">boundingBox</span> <span class="o">=</span> <span class="n">bounding_box</span>
-            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;attributes&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;attributes&#39;</span><span class="p">]:</span>
                 <span class="n">place_attributes</span> <span class="o">=</span> <span class="n">PlaceAttributes</span><span class="p">()</span>
-                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">place_attributes</span><span class="p">,</span> <span class="n">tweet</span><span class="p">[</span><span class="s">u&#39;place&#39;</span><span class="p">][</span><span class="s">u&#39;attributes&#39;</span><span class="p">])</span>
+                <span class="n">set_flat_fields</span><span class="p">(</span><span class="n">place_attributes</span><span class="p">,</span>
+                                <span class="n">tweet</span><span class="p">[</span><span class="s1">u&#39;place&#39;</span><span class="p">][</span><span class="s1">u&#39;attributes&#39;</span><span class="p">])</span>
                 <span class="n">twitter_place</span><span class="o">.</span><span class="n">attributes</span> <span class="o">=</span> <span class="n">place_attributes</span>
             <span class="n">tweet_info</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">twitter_place</span>
 
+    <span class="n">tweet_info</span><span class="o">.</span><span class="n">lid</span> <span class="o">=</span> <span class="n">capture_tweet_lid</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">tweet_info</span>
 </pre></div>
 
@@ -1395,7 +1572,7 @@ table {
       
   <div class="item">
     <div class="name def" id="concrete.util.twitter.json_tweet_string_to_Communication">
-    <p>def <span class="ident">json_tweet_string_to_Communication</span>(</p><p>json_tweet_string)</p>
+    <p>def <span class="ident">json_tweet_string_to_Communication</span>(</p><p>json_tweet_string, check_empty=False, check_delete=False)</p>
     </div>
     
 
@@ -1404,9 +1581,17 @@ table {
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.json_tweet_string_to_Communication', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.twitter.json_tweet_string_to_Communication" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">json_tweet_string_to_Communication</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">):</span>
-    <span class="n">tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">json_tweet_string_to_Communication</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">,</span> <span class="n">check_empty</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                       <span class="n">check_delete</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">json_tweet_string</span> <span class="o">=</span> <span class="n">json_tweet_string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">check_empty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">json_tweet_string</span><span class="p">:</span>
+        <span class="n">json_tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">check_delete</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">json_tweet</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,):</span>
+            <span class="k">return</span> <span class="n">json_tweet_object_to_Communication</span><span class="p">(</span><span class="n">json_tweet</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
 </pre></div>
 
   </div>
@@ -1426,9 +1611,72 @@ table {
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.json_tweet_string_to_TweetInfo', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.twitter.json_tweet_string_to_TweetInfo" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">json_tweet_string_to_TweetInfo</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">json_tweet_string_to_TweetInfo</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">):</span>
     <span class="n">tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_tweet_string</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">json_tweet_object_to_TweetInfo</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.twitter.twitter_lid_to_iso639_3">
+    <p>def <span class="ident">twitter_lid_to_iso639_3</span>(</p><p>twitter_lid)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Ref: https://dev.twitter.com/rest/reference/get/help/languages</p>
+<p>This can be an iso639-3 code (no-op), iso639-1 2-letter abbr
+(converted to 3), or combo (split by '-', then first part converted)</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.twitter_lid_to_iso639_3', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.twitter.twitter_lid_to_iso639_3" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">twitter_lid_to_iso639_3</span><span class="p">(</span><span class="n">twitter_lid</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ref: https://dev.twitter.com/rest/reference/get/help/languages</span>
+
+<span class="sd">    This can be an iso639-3 code (no-op), iso639-1 2-letter abbr</span>
+<span class="sd">    (converted to 3), or combo (split by &#39;-&#39;, then first part converted)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">twitter_lid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ISO_LANGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">iso639_1_code</span><span class="o">=</span><span class="n">twitter_lid</span><span class="p">)</span><span class="o">.</span><span class="n">iso639_3_code</span>
+    <span class="k">elif</span> <span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">twitter_lid</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">twitter_lid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">spl</span> <span class="o">=</span> <span class="n">twitter_lid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ISO_LANGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">iso639_1_code</span><span class="o">=</span><span class="n">spl</span><span class="p">)</span><span class="o">.</span><span class="n">iso639_3_code</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">twitter_lid</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.twitter.unix_time">
+    <p>def <span class="ident">unix_time</span>(</p><p>dt)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Source:
+http://stackoverflow.com/questions/6999726/how-can-i-convert-a-datetime-object-to-milliseconds-since-epoch-unix-time-in-p</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.twitter.unix_time', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.twitter.unix_time" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">unix_time</span><span class="p">(</span><span class="n">dt</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Source:</span>
+<span class="sd">    http://stackoverflow.com/questions/6999726/how-can-i-convert-a-datetime-object-to-milliseconds-since-epoch-unix-time-in-p</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">dt</span> <span class="o">-</span> <span class="n">EPOCH</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">())</span>
 </pre></div>
 
   </div>
@@ -1445,7 +1693,7 @@ table {
   <footer id="footer">
     <p>
       Documentation generated by
-      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.1</a>
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
     </p>
 
     <p>pdoc is in the public domain with the

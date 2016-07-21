@@ -554,7 +554,7 @@ table {
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
   body {
     background: #fff;
@@ -858,8 +858,10 @@ table {
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
 .codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
 .codehilite .gd { color: #A00000 } /* Generic.Deleted */
@@ -1034,15 +1036,42 @@ table {
   <div id="sidebar">
     <h1>Index</h1>
     <ul id="index">
+    <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#concrete.util.simple_comm.AL_NONE">AL_NONE</a></li>
+    <li class="mono"><a href="#concrete.util.simple_comm.AL_SECTION">AL_SECTION</a></li>
+    <li class="mono"><a href="#concrete.util.simple_comm.AL_SENTENCE">AL_SENTENCE</a></li>
+    <li class="mono"><a href="#concrete.util.simple_comm.AL_TOKEN">AL_TOKEN</a></li>
+  </ul>
+
+    </li>
 
     <li class="set"><h3><a href="#header-functions">Functions</a></h3>
       
   <ul>
+    <li class="mono"><a href="#concrete.util.simple_comm.add_annotation_level_argparse_argument">add_annotation_level_argparse_argument</a></li>
+    <li class="mono"><a href="#concrete.util.simple_comm.create_comm">create_comm</a></li>
+    <li class="mono"><a href="#concrete.util.simple_comm.create_section">create_section</a></li>
+    <li class="mono"><a href="#concrete.util.simple_comm.create_sentence">create_sentence</a></li>
     <li class="mono"><a href="#concrete.util.simple_comm.create_simple_comm">create_simple_comm</a></li>
   </ul>
 
     </li>
 
+    <li class="set"><h3><a href="#header-classes">Classes</a></h3>
+      <ul>
+        <li class="mono">
+        <span class="class_name"><a href="#concrete.util.simple_comm.SimpleCommTempFile">SimpleCommTempFile</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#concrete.util.simple_comm.SimpleCommTempFile.__init__">__init__</a></li>
+  </ul>
+
+        </li>
+      </ul>
+    </li>
 
     </ul>
   </div>
@@ -1060,10 +1089,13 @@ table {
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.simple_comm" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">from</span> <span class="nn">concrete</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AnnotationMetadata</span><span class="p">,</span>
@@ -1076,10 +1108,151 @@ table {
     <span class="n">TokenizationKind</span><span class="p">,</span>
     <span class="n">TokenList</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">concrete.util</span> <span class="kn">import</span> <span class="n">generate_UUID</span>
+<span class="kn">from</span> <span class="nn">concrete.util.concrete_uuid</span> <span class="kn">import</span> <span class="n">AnalyticUUIDGeneratorFactory</span>
+<span class="kn">from</span> <span class="nn">concrete.util.file_io</span> <span class="kn">import</span> <span class="n">CommunicationWriter</span>
 
 
-<span class="k">def</span> <span class="nf">create_simple_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">sentence_string</span><span class="o">=</span><span class="s">&quot;Super simple sentence .&quot;</span><span class="p">):</span>
+<span class="n">AL_NONE</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+<span class="n">AL_SECTION</span> <span class="o">=</span> <span class="s1">&#39;section&#39;</span>
+<span class="n">AL_SENTENCE</span> <span class="o">=</span> <span class="s1">&#39;sentence&#39;</span>
+<span class="n">AL_TOKEN</span> <span class="o">=</span> <span class="s1">&#39;token&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">add_annotation_level_argparse_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--annotation-level&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="n">AL_NONE</span><span class="p">,</span> <span class="n">AL_SECTION</span><span class="p">,</span> <span class="n">AL_SENTENCE</span><span class="p">,</span> <span class="n">AL_TOKEN</span><span class="p">),</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Level of concrete annotation to infer from&#39;</span>
+                             <span class="s1">&#39; whitespace in text (</span><span class="si">%s</span><span class="s1">: no annotation,&#39;</span>
+                             <span class="s1">&#39; </span><span class="si">%s</span><span class="s1">: sections inferred&#39;</span>
+                             <span class="s1">&#39; from double-newline, </span><span class="si">%s</span><span class="s1">: &quot;</span><span class="si">%s</span><span class="s1">&quot; and sentences&#39;</span>
+                             <span class="s1">&#39; inferred from single-newline, </span><span class="si">%s</span><span class="s1">: &quot;</span><span class="si">%s</span><span class="s1">&quot; and&#39;</span>
+                             <span class="s1">&#39; tokens inferred from remaining whitespace)&#39;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">AL_NONE</span><span class="p">,</span>
+                              <span class="n">AL_SECTION</span><span class="p">,</span>
+                              <span class="n">AL_SENTENCE</span><span class="p">,</span> <span class="n">AL_SECTION</span><span class="p">,</span>
+                              <span class="n">AL_TOKEN</span><span class="p">,</span> <span class="n">AL_SENTENCE</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_split</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">delim</span><span class="p">):</span>
+    <span class="n">pieces</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">delim</span><span class="p">)</span>
+    <span class="n">indexed_pieces</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pieces</span><span class="p">:</span>
+        <span class="n">indexed_pieces</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span>
+        <span class="n">offset</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">delim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">indexed_pieces</span>
+
+
+<span class="k">def</span> <span class="nf">create_sentence</span><span class="p">(</span><span class="n">sen_text</span><span class="p">,</span> <span class="n">sen_start</span><span class="p">,</span> <span class="n">sen_end</span><span class="p">,</span>
+                    <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                    <span class="n">annotation_level</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create sentence from provided text and metadata.</span>
+<span class="sd">    Lower-level routine (called indirectly by create_comm).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_NONE</span><span class="p">)</span>
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">sections</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_SECTION</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">sentences</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_SENTENCE</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Sentence</span><span class="p">(</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="n">sen_start</span><span class="p">,</span> <span class="n">sen_end</span><span class="p">),</span>
+        <span class="n">tokenization</span><span class="o">=</span><span class="n">Tokenization</span><span class="p">(</span>
+            <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+            <span class="n">kind</span><span class="o">=</span><span class="n">TokenizationKind</span><span class="o">.</span><span class="n">TOKEN_LIST</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span>
+                <span class="n">tool</span><span class="o">=</span><span class="n">metadata_tool</span><span class="p">,</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">metadata_timestamp</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">tokenList</span><span class="o">=</span><span class="n">TokenList</span><span class="p">(</span><span class="n">tokenList</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">Token</span><span class="p">(</span>
+                    <span class="n">tokenIndex</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">tok_text</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">tok_text</span><span class="p">)</span>
+                <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sen_text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="p">]),</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">tokens</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_section</span><span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">,</span> <span class="n">section_kind</span><span class="p">,</span>
+                   <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                   <span class="n">annotation_level</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create section from provided text and metadata.</span>
+<span class="sd">    Lower-level routine (called by create_comm).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_NONE</span><span class="p">)</span>
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">sections</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_SECTION</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Section</span><span class="p">(</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">),</span>
+        <span class="n">kind</span><span class="o">=</span><span class="n">section_kind</span><span class="p">,</span>
+        <span class="n">sentenceList</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">create_sentence</span><span class="p">(</span><span class="n">sen_text</span><span class="p">,</span>
+                                <span class="n">sec_start</span> <span class="o">+</span> <span class="n">sen_start</span><span class="p">,</span>
+                                <span class="n">sec_start</span> <span class="o">+</span> <span class="n">sen_end</span><span class="p">,</span>
+                                <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                                <span class="n">annotation_level</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">sen_text</span><span class="p">,</span> <span class="n">sen_start</span><span class="p">,</span> <span class="n">sen_end</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_split</span><span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">sec_text</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sec_text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">sentences</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="n">comm_type</span><span class="o">=</span><span class="s1">&#39;article&#39;</span><span class="p">,</span> <span class="n">section_kind</span><span class="o">=</span><span class="s1">&#39;passage&#39;</span><span class="p">,</span>
+                <span class="n">metadata_tool</span><span class="o">=</span><span class="s1">&#39;concrete-python&#39;</span><span class="p">,</span>
+                <span class="n">metadata_timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                <span class="n">annotation_level</span><span class="o">=</span><span class="n">AL_TOKEN</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a simple, valid Communication from text.</span>
+<span class="sd">    By default the text will be split by double-newlines into sections</span>
+<span class="sd">    and then by single newlines into sentences within those sections.</span>
+
+<span class="sd">    annotation_level controls the amount of annotation that is added:</span>
+<span class="sd">      AL_NONE      add no optional annotations (not even sections)</span>
+<span class="sd">      AL_SECTION   add sections but not sentences</span>
+<span class="sd">      AL_SENTENCE  add sentences but not tokens</span>
+<span class="sd">      AL_TOKEN     add all annotations, up to tokens (the default)</span>
+
+<span class="sd">    If metadata_timestamp is None, the current time will be used.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">metadata_timestamp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">metadata_timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+
+    <span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">()</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_NONE</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Communication</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">comm_id</span><span class="p">,</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">comm_type</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span>
+            <span class="n">tool</span><span class="o">=</span><span class="n">metadata_tool</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">metadata_timestamp</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">sectionList</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">create_section</span><span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">,</span> <span class="n">section_kind</span><span class="p">,</span>
+                               <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                               <span class="n">annotation_level</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_split</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="p">]</span> <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">sections</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_simple_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">sentence_string</span><span class="o">=</span><span class="s2">&quot;Super simple sentence .&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
 
 <span class="sd">    The Communication will have a single Section containing a single</span>
@@ -1095,39 +1268,119 @@ table {
 
 <span class="sd">    - A Concrete Communication object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">toolname</span><span class="o">=</span><span class="s">&quot;TEST&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;create_simple_comm will be removed in a future&#39;</span>
+                    <span class="s1">&#39; release, please use create_comm instead&#39;</span><span class="p">)</span>
+
+    <span class="n">toolname</span> <span class="o">=</span> <span class="s2">&quot;TEST&quot;</span>
     <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+
+    <span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">()</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">(</span>
         <span class="nb">id</span><span class="o">=</span><span class="n">comm_id</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="n">toolname</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">),</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">toolname</span><span class="p">,</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
 
     <span class="n">tokenization</span> <span class="o">=</span> <span class="n">Tokenization</span><span class="p">(</span>
         <span class="n">kind</span><span class="o">=</span><span class="n">TokenizationKind</span><span class="o">.</span><span class="n">TOKEN_LIST</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="n">toolname</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">),</span>
         <span class="n">tokenList</span><span class="o">=</span><span class="n">TokenList</span><span class="p">(</span>
             <span class="n">tokenList</span><span class="o">=</span><span class="p">[]),</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
     <span class="n">token_string_list</span> <span class="o">=</span> <span class="n">sentence_string</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">token_string_list</span><span class="p">):</span>
-        <span class="n">tokenization</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Token</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">token_string</span><span class="p">,</span> <span class="n">tokenIndex</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">tokenization</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Token</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">token_string</span><span class="p">,</span>
+                                                      <span class="n">tokenIndex</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
 
     <span class="n">sentence</span> <span class="o">=</span> <span class="n">Sentence</span><span class="p">(</span>
         <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence_string</span><span class="p">)),</span>
         <span class="n">tokenization</span><span class="o">=</span><span class="n">tokenization</span><span class="p">,</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
 
     <span class="n">section</span> <span class="o">=</span> <span class="n">Section</span><span class="p">(</span>
-        <span class="n">kind</span><span class="o">=</span><span class="s">&quot;SectionKind&quot;</span><span class="p">,</span>
+        <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;SectionKind&quot;</span><span class="p">,</span>
         <span class="n">sentenceList</span><span class="o">=</span><span class="p">[</span><span class="n">sentence</span><span class="p">],</span>
         <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence_string</span><span class="p">)),</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
 
-    <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span><span class="o">=</span><span class="p">[</span><span class="n">section</span><span class="p">]</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span> <span class="o">=</span> <span class="p">[</span><span class="n">section</span><span class="p">]</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">sentence_string</span>
 
     <span class="k">return</span> <span class="n">comm</span>
+
+
+<span class="k">class</span> <span class="nc">SimpleCommTempFile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Class representing a temporary file of sample concrete objects.</span>
+<span class="sd">    Designed to facilitate testing.  Class members:</span>
+
+<span class="sd">        path:           path to file</span>
+<span class="sd">        communications: list of communications that were written to file</span>
+
+<span class="sd">    Usage demo:</span>
+
+<span class="sd">    &gt;&gt;&gt; from concrete.util import CommunicationReader</span>
+<span class="sd">    &gt;&gt;&gt; with SimpleCommTempFile(n=3, id_fmt=&#39;temp-%d&#39;) as f:</span>
+<span class="sd">    ...     reader = CommunicationReader(f.path)</span>
+<span class="sd">    ...     for (orig_comm, comm_path_pair) in zip(f.communications, reader):</span>
+<span class="sd">    ...         print orig_comm.id</span>
+<span class="sd">    ...         print orig_comm.id == comm_path_pair[0].id</span>
+<span class="sd">    ...         print f.path == comm_path_pair[1]</span>
+<span class="sd">    temp-0</span>
+<span class="sd">    True</span>
+<span class="sd">    True</span>
+<span class="sd">    temp-1</span>
+<span class="sd">    True</span>
+<span class="sd">    True</span>
+<span class="sd">    temp-2</span>
+<span class="sd">    True</span>
+<span class="sd">    True</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">id_fmt</span><span class="o">=</span><span class="s1">&#39;temp-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span>
+                 <span class="n">sentence_fmt</span><span class="o">=</span><span class="s1">&#39;Super simple sentence </span><span class="si">%d</span><span class="s1"> .&#39;</span><span class="p">,</span>
+                 <span class="n">writer_class</span><span class="o">=</span><span class="n">CommunicationWriter</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.concrete&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create temp file and write communications.</span>
+
+<span class="sd">            n:i     number of communications to write</span>
+<span class="sd">            id_fmt: format string used to generate communication IDs;</span>
+<span class="sd">                    should contain one instance of %d, which will be</span>
+<span class="sd">                    replaced by the number of the communication</span>
+<span class="sd">            sentence_fmt: format string used to generate communication</span>
+<span class="sd">                    IDs; should contain one instance of %d, which will</span>
+<span class="sd">                    be replaced by the number of the communication</span>
+<span class="sd">            writer_class: CommunicationWriter or CommunicationTGZWriter</span>
+<span class="sd">            suffix: file path suffix (you probably want to choose this</span>
+<span class="sd">                    to match writer_class)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;SimpleCommTempFile will be removed in a future&#39;</span>
+                        <span class="s1">&#39; release, please use create_comm instead&#39;</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">communications</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">writer_class</span><span class="p">()</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">comm</span> <span class="o">=</span> <span class="n">create_simple_comm</span><span class="p">(</span><span class="n">id_fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">,</span> <span class="n">sentence_fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">communications</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1135,8 +1388,246 @@ table {
   </header>
 
   <section id="section-items">
+    <h2 class="section-title" id="header-variables">Module variables</h2>
+      <div class="item">
+      <p id="concrete.util.simple_comm.AL_NONE" class="name">var <span class="ident">AL_NONE</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="concrete.util.simple_comm.AL_SECTION" class="name">var <span class="ident">AL_SECTION</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="concrete.util.simple_comm.AL_SENTENCE" class="name">var <span class="ident">AL_SENTENCE</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="concrete.util.simple_comm.AL_TOKEN" class="name">var <span class="ident">AL_TOKEN</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
 
     <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.simple_comm.add_annotation_level_argparse_argument">
+    <p>def <span class="ident">add_annotation_level_argparse_argument</span>(</p><p>parser)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.add_annotation_level_argparse_argument', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.simple_comm.add_annotation_level_argparse_argument" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">add_annotation_level_argparse_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--annotation-level&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="n">AL_NONE</span><span class="p">,</span> <span class="n">AL_SECTION</span><span class="p">,</span> <span class="n">AL_SENTENCE</span><span class="p">,</span> <span class="n">AL_TOKEN</span><span class="p">),</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Level of concrete annotation to infer from&#39;</span>
+                             <span class="s1">&#39; whitespace in text (</span><span class="si">%s</span><span class="s1">: no annotation,&#39;</span>
+                             <span class="s1">&#39; </span><span class="si">%s</span><span class="s1">: sections inferred&#39;</span>
+                             <span class="s1">&#39; from double-newline, </span><span class="si">%s</span><span class="s1">: &quot;</span><span class="si">%s</span><span class="s1">&quot; and sentences&#39;</span>
+                             <span class="s1">&#39; inferred from single-newline, </span><span class="si">%s</span><span class="s1">: &quot;</span><span class="si">%s</span><span class="s1">&quot; and&#39;</span>
+                             <span class="s1">&#39; tokens inferred from remaining whitespace)&#39;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">AL_NONE</span><span class="p">,</span>
+                              <span class="n">AL_SECTION</span><span class="p">,</span>
+                              <span class="n">AL_SENTENCE</span><span class="p">,</span> <span class="n">AL_SECTION</span><span class="p">,</span>
+                              <span class="n">AL_TOKEN</span><span class="p">,</span> <span class="n">AL_SENTENCE</span><span class="p">))</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.simple_comm.create_comm">
+    <p>def <span class="ident">create_comm</span>(</p><p>comm_id, text=&#39;&#39;, comm_type=&#39;article&#39;, section_kind=&#39;passage&#39;, metadata_tool=&#39;concrete-python&#39;, metadata_timestamp=None, annotation_level=&#39;token&#39;)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create a simple, valid Communication from text.
+By default the text will be split by double-newlines into sections
+and then by single newlines into sentences within those sections.</p>
+<p>annotation_level controls the amount of annotation that is added:
+  AL_NONE      add no optional annotations (not even sections)
+  AL_SECTION   add sections but not sentences
+  AL_SENTENCE  add sentences but not tokens
+  AL_TOKEN     add all annotations, up to tokens (the default)</p>
+<p>If metadata_timestamp is None, the current time will be used.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.create_comm', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.simple_comm.create_comm" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="n">comm_type</span><span class="o">=</span><span class="s1">&#39;article&#39;</span><span class="p">,</span> <span class="n">section_kind</span><span class="o">=</span><span class="s1">&#39;passage&#39;</span><span class="p">,</span>
+                <span class="n">metadata_tool</span><span class="o">=</span><span class="s1">&#39;concrete-python&#39;</span><span class="p">,</span>
+                <span class="n">metadata_timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                <span class="n">annotation_level</span><span class="o">=</span><span class="n">AL_TOKEN</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a simple, valid Communication from text.</span>
+<span class="sd">    By default the text will be split by double-newlines into sections</span>
+<span class="sd">    and then by single newlines into sentences within those sections.</span>
+
+<span class="sd">    annotation_level controls the amount of annotation that is added:</span>
+<span class="sd">      AL_NONE      add no optional annotations (not even sections)</span>
+<span class="sd">      AL_SECTION   add sections but not sentences</span>
+<span class="sd">      AL_SENTENCE  add sentences but not tokens</span>
+<span class="sd">      AL_TOKEN     add all annotations, up to tokens (the default)</span>
+
+<span class="sd">    If metadata_timestamp is None, the current time will be used.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">metadata_timestamp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">metadata_timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+
+    <span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">()</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_NONE</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Communication</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">comm_id</span><span class="p">,</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">comm_type</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span>
+            <span class="n">tool</span><span class="o">=</span><span class="n">metadata_tool</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">metadata_timestamp</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">sectionList</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">create_section</span><span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">,</span> <span class="n">section_kind</span><span class="p">,</span>
+                               <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                               <span class="n">annotation_level</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_split</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="p">]</span> <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">sections</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.simple_comm.create_section">
+    <p>def <span class="ident">create_section</span>(</p><p>sec_text, sec_start, sec_end, section_kind, aug, metadata_tool, metadata_timestamp, annotation_level)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create section from provided text and metadata.
+Lower-level routine (called by create_comm).</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.create_section', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.simple_comm.create_section" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create_section</span><span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">,</span> <span class="n">section_kind</span><span class="p">,</span>
+                   <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                   <span class="n">annotation_level</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create section from provided text and metadata.</span>
+<span class="sd">    Lower-level routine (called by create_comm).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_NONE</span><span class="p">)</span>
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">sections</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_SECTION</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Section</span><span class="p">(</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="n">sec_start</span><span class="p">,</span> <span class="n">sec_end</span><span class="p">),</span>
+        <span class="n">kind</span><span class="o">=</span><span class="n">section_kind</span><span class="p">,</span>
+        <span class="n">sentenceList</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">create_sentence</span><span class="p">(</span><span class="n">sen_text</span><span class="p">,</span>
+                                <span class="n">sec_start</span> <span class="o">+</span> <span class="n">sen_start</span><span class="p">,</span>
+                                <span class="n">sec_start</span> <span class="o">+</span> <span class="n">sen_end</span><span class="p">,</span>
+                                <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                                <span class="n">annotation_level</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">sen_text</span><span class="p">,</span> <span class="n">sen_start</span><span class="p">,</span> <span class="n">sen_end</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_split</span><span class="p">(</span><span class="n">sec_text</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">sec_text</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sec_text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">sentences</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="concrete.util.simple_comm.create_sentence">
+    <p>def <span class="ident">create_sentence</span>(</p><p>sen_text, sen_start, sen_end, aug, metadata_tool, metadata_timestamp, annotation_level)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create sentence from provided text and metadata.
+Lower-level routine (called indirectly by create_comm).</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.create_sentence', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.simple_comm.create_sentence" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create_sentence</span><span class="p">(</span><span class="n">sen_text</span><span class="p">,</span> <span class="n">sen_start</span><span class="p">,</span> <span class="n">sen_end</span><span class="p">,</span>
+                    <span class="n">aug</span><span class="p">,</span> <span class="n">metadata_tool</span><span class="p">,</span> <span class="n">metadata_timestamp</span><span class="p">,</span>
+                    <span class="n">annotation_level</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create sentence from provided text and metadata.</span>
+<span class="sd">    Lower-level routine (called indirectly by create_comm).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_NONE</span><span class="p">)</span>
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">sections</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_SECTION</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">sentences</span> <span class="ow">and</span> <span class="p">(</span><span class="n">annotation_level</span> <span class="o">!=</span> <span class="n">AL_SENTENCE</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Sentence</span><span class="p">(</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+        <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="n">sen_start</span><span class="p">,</span> <span class="n">sen_end</span><span class="p">),</span>
+        <span class="n">tokenization</span><span class="o">=</span><span class="n">Tokenization</span><span class="p">(</span>
+            <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span>
+            <span class="n">kind</span><span class="o">=</span><span class="n">TokenizationKind</span><span class="o">.</span><span class="n">TOKEN_LIST</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span>
+                <span class="n">tool</span><span class="o">=</span><span class="n">metadata_tool</span><span class="p">,</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">metadata_timestamp</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">tokenList</span><span class="o">=</span><span class="n">TokenList</span><span class="p">(</span><span class="n">tokenList</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">Token</span><span class="p">(</span>
+                    <span class="n">tokenIndex</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">tok_text</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">tok_text</span><span class="p">)</span>
+                <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sen_text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="p">]),</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">tokens</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
       
   <div class="item">
     <div class="name def" id="concrete.util.simple_comm.create_simple_comm">
@@ -1162,7 +1653,7 @@ Sentence.</p>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.create_simple_comm', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.simple_comm.create_simple_comm" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">create_simple_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">sentence_string</span><span class="o">=</span><span class="s">&quot;Super simple sentence .&quot;</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create_simple_comm</span><span class="p">(</span><span class="n">comm_id</span><span class="p">,</span> <span class="n">sentence_string</span><span class="o">=</span><span class="s2">&quot;Super simple sentence .&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a simple (valid) Communication suitable for testing purposes</span>
 
 <span class="sd">    The Communication will have a single Section containing a single</span>
@@ -1178,37 +1669,49 @@ Sentence.</p>
 
 <span class="sd">    - A Concrete Communication object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">toolname</span><span class="o">=</span><span class="s">&quot;TEST&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;create_simple_comm will be removed in a future&#39;</span>
+                    <span class="s1">&#39; release, please use create_comm instead&#39;</span><span class="p">)</span>
+
+    <span class="n">toolname</span> <span class="o">=</span> <span class="s2">&quot;TEST&quot;</span>
     <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+
+    <span class="n">augf</span> <span class="o">=</span> <span class="n">AnalyticUUIDGeneratorFactory</span><span class="p">()</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">augf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">(</span>
         <span class="nb">id</span><span class="o">=</span><span class="n">comm_id</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="n">toolname</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">),</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">toolname</span><span class="p">,</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
 
     <span class="n">tokenization</span> <span class="o">=</span> <span class="n">Tokenization</span><span class="p">(</span>
         <span class="n">kind</span><span class="o">=</span><span class="n">TokenizationKind</span><span class="o">.</span><span class="n">TOKEN_LIST</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="n">AnnotationMetadata</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="n">toolname</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">),</span>
         <span class="n">tokenList</span><span class="o">=</span><span class="n">TokenList</span><span class="p">(</span>
             <span class="n">tokenList</span><span class="o">=</span><span class="p">[]),</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
     <span class="n">token_string_list</span> <span class="o">=</span> <span class="n">sentence_string</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">token_string_list</span><span class="p">):</span>
-        <span class="n">tokenization</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Token</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">token_string</span><span class="p">,</span> <span class="n">tokenIndex</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">tokenization</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">tokenList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Token</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">token_string</span><span class="p">,</span>
+                                                      <span class="n">tokenIndex</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
 
     <span class="n">sentence</span> <span class="o">=</span> <span class="n">Sentence</span><span class="p">(</span>
         <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence_string</span><span class="p">)),</span>
         <span class="n">tokenization</span><span class="o">=</span><span class="n">tokenization</span><span class="p">,</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
 
     <span class="n">section</span> <span class="o">=</span> <span class="n">Section</span><span class="p">(</span>
-        <span class="n">kind</span><span class="o">=</span><span class="s">&quot;SectionKind&quot;</span><span class="p">,</span>
+        <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;SectionKind&quot;</span><span class="p">,</span>
         <span class="n">sentenceList</span><span class="o">=</span><span class="p">[</span><span class="n">sentence</span><span class="p">],</span>
         <span class="n">textSpan</span><span class="o">=</span><span class="n">TextSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence_string</span><span class="p">)),</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">generate_UUID</span><span class="p">())</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">aug</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="p">)</span>
 
-    <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span><span class="o">=</span><span class="p">[</span><span class="n">section</span><span class="p">]</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">sectionList</span> <span class="o">=</span> <span class="p">[</span><span class="n">section</span><span class="p">]</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">sentence_string</span>
 
     <span class="k">return</span> <span class="n">comm</span>
 </pre></div>
@@ -1219,6 +1722,206 @@ Sentence.</p>
   </div>
   
 
+    <h2 class="section-title" id="header-classes">Classes</h2>
+      
+      <div class="item">
+      <p id="concrete.util.simple_comm.SimpleCommTempFile" class="name">class <span class="ident">SimpleCommTempFile</span></p>
+      
+  
+    <div class="desc"><p>Class representing a temporary file of sample concrete objects.
+Designed to facilitate testing.  Class members:</p>
+<div class="codehilite"><pre><span></span>path:           path to file
+communications: list of communications that were written to file
+</pre></div>
+
+
+<p>Usage demo:</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>from concrete.util import CommunicationReader
+with SimpleCommTempFile(n=3, id_fmt='temp-%d') as f:
+...     reader = CommunicationReader(f.path)
+...     for (orig_comm, comm_path_pair) in zip(f.communications, reader):
+...         print orig_comm.id
+...         print orig_comm.id == comm_path_pair[0].id
+...         print f.path == comm_path_pair[1]
+temp-0
+True
+True
+temp-1
+True
+True
+temp-2
+True
+True</p>
+</blockquote>
+</blockquote>
+</blockquote></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.SimpleCommTempFile', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.simple_comm.SimpleCommTempFile" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SimpleCommTempFile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Class representing a temporary file of sample concrete objects.</span>
+<span class="sd">    Designed to facilitate testing.  Class members:</span>
+
+<span class="sd">        path:           path to file</span>
+<span class="sd">        communications: list of communications that were written to file</span>
+
+<span class="sd">    Usage demo:</span>
+
+<span class="sd">    &gt;&gt;&gt; from concrete.util import CommunicationReader</span>
+<span class="sd">    &gt;&gt;&gt; with SimpleCommTempFile(n=3, id_fmt=&#39;temp-%d&#39;) as f:</span>
+<span class="sd">    ...     reader = CommunicationReader(f.path)</span>
+<span class="sd">    ...     for (orig_comm, comm_path_pair) in zip(f.communications, reader):</span>
+<span class="sd">    ...         print orig_comm.id</span>
+<span class="sd">    ...         print orig_comm.id == comm_path_pair[0].id</span>
+<span class="sd">    ...         print f.path == comm_path_pair[1]</span>
+<span class="sd">    temp-0</span>
+<span class="sd">    True</span>
+<span class="sd">    True</span>
+<span class="sd">    temp-1</span>
+<span class="sd">    True</span>
+<span class="sd">    True</span>
+<span class="sd">    temp-2</span>
+<span class="sd">    True</span>
+<span class="sd">    True</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">id_fmt</span><span class="o">=</span><span class="s1">&#39;temp-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span>
+                 <span class="n">sentence_fmt</span><span class="o">=</span><span class="s1">&#39;Super simple sentence </span><span class="si">%d</span><span class="s1"> .&#39;</span><span class="p">,</span>
+                 <span class="n">writer_class</span><span class="o">=</span><span class="n">CommunicationWriter</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.concrete&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create temp file and write communications.</span>
+
+<span class="sd">            n:i     number of communications to write</span>
+<span class="sd">            id_fmt: format string used to generate communication IDs;</span>
+<span class="sd">                    should contain one instance of %d, which will be</span>
+<span class="sd">                    replaced by the number of the communication</span>
+<span class="sd">            sentence_fmt: format string used to generate communication</span>
+<span class="sd">                    IDs; should contain one instance of %d, which will</span>
+<span class="sd">                    be replaced by the number of the communication</span>
+<span class="sd">            writer_class: CommunicationWriter or CommunicationTGZWriter</span>
+<span class="sd">            suffix: file path suffix (you probably want to choose this</span>
+<span class="sd">                    to match writer_class)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;SimpleCommTempFile will be removed in a future&#39;</span>
+                        <span class="s1">&#39; release, please use create_comm instead&#39;</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">communications</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">writer_class</span><span class="p">()</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">comm</span> <span class="o">=</span> <span class="n">create_simple_comm</span><span class="p">(</span><span class="n">id_fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">,</span> <span class="n">sentence_fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">communications</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#concrete.util.simple_comm.SimpleCommTempFile">SimpleCommTempFile</a></li>
+          <li>__builtin__.object</li>
+          </ul>
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="concrete.util.simple_comm.SimpleCommTempFile.communications" class="name">var <span class="ident">communications</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="concrete.util.simple_comm.SimpleCommTempFile.path" class="name">var <span class="ident">path</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.simple_comm.SimpleCommTempFile.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, n=10, id_fmt=&#39;temp-%d&#39;, sentence_fmt=&#39;Super simple sentence %d .&#39;, writer_class=&lt;class &#39;concrete.util.file_io.CommunicationWriter&#39;&gt;, suffix=&#39;.concrete&#39;)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create temp file and write communications.</p>
+<p>n:i     number of communications to write
+id_fmt: format string used to generate communication IDs;
+        should contain one instance of %d, which will be
+        replaced by the number of the communication
+sentence_fmt: format string used to generate communication
+        IDs; should contain one instance of %d, which will
+        be replaced by the number of the communication
+writer_class: CommunicationWriter or CommunicationTGZWriter
+suffix: file path suffix (you probably want to choose this
+        to match writer_class)</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.simple_comm.SimpleCommTempFile.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.simple_comm.SimpleCommTempFile.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">id_fmt</span><span class="o">=</span><span class="s1">&#39;temp-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span>
+             <span class="n">sentence_fmt</span><span class="o">=</span><span class="s1">&#39;Super simple sentence </span><span class="si">%d</span><span class="s1"> .&#39;</span><span class="p">,</span>
+             <span class="n">writer_class</span><span class="o">=</span><span class="n">CommunicationWriter</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.concrete&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create temp file and write communications.</span>
+<span class="sd">        n:i     number of communications to write</span>
+<span class="sd">        id_fmt: format string used to generate communication IDs;</span>
+<span class="sd">                should contain one instance of %d, which will be</span>
+<span class="sd">                replaced by the number of the communication</span>
+<span class="sd">        sentence_fmt: format string used to generate communication</span>
+<span class="sd">                IDs; should contain one instance of %d, which will</span>
+<span class="sd">                be replaced by the number of the communication</span>
+<span class="sd">        writer_class: CommunicationWriter or CommunicationTGZWriter</span>
+<span class="sd">        suffix: file path suffix (you probably want to choose this</span>
+<span class="sd">                to match writer_class)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;SimpleCommTempFile will be removed in a future&#39;</span>
+                    <span class="s1">&#39; release, please use create_comm instead&#39;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">communications</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">writer_class</span><span class="p">()</span>
+    <span class="n">w</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">comm</span> <span class="o">=</span> <span class="n">create_simple_comm</span><span class="p">(</span><span class="n">id_fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">,</span> <span class="n">sentence_fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">communications</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="n">w</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
 
   </section>
 
@@ -1227,7 +1930,7 @@ Sentence.</p>
   <footer id="footer">
     <p>
       Documentation generated by
-      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.1</a>
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
     </p>
 
     <p>pdoc is in the public domain with the

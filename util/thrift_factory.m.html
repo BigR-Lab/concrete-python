@@ -3,9 +3,8 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
-    <title>concrete API documentation</title>
-    <meta name="description" content="Python modules and scripts for working with
-[Concrete](https://github.com/hltcoe/concrete), an HLT d..." />
+    <title>concrete.util.thrift_factory API documentation</title>
+    <meta name="description" content="" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1037,16 +1036,33 @@ table {
   <div id="sidebar">
     <h1>Index</h1>
     <ul id="index">
+    <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#concrete.util.thrift_factory.factory">factory</a></li>
+  </ul>
+
+    </li>
 
 
-
-    <li class="set"><h3><a href="#header-submodules">Sub-modules</a></h3>
+    <li class="set"><h3><a href="#header-classes">Classes</a></h3>
       <ul>
-        <li class="mono"><a href="inspect.m.html">concrete.inspect</a></li>
-        <li class="mono"><a href="util/index.html">concrete.util</a></li>
-        <li class="mono"><a href="validate.m.html">concrete.validate</a></li>
+        <li class="mono">
+        <span class="class_name"><a href="#concrete.util.thrift_factory.ThriftFactory">ThriftFactory</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#concrete.util.thrift_factory.ThriftFactory.__init__">__init__</a></li>
+    <li class="mono"><a href="#concrete.util.thrift_factory.ThriftFactory.createProtocol">createProtocol</a></li>
+    <li class="mono"><a href="#concrete.util.thrift_factory.ThriftFactory.createServer">createServer</a></li>
+    <li class="mono"><a href="#concrete.util.thrift_factory.ThriftFactory.createSocket">createSocket</a></li>
+    <li class="mono"><a href="#concrete.util.thrift_factory.ThriftFactory.createTransport">createTransport</a></li>
+  </ul>
+
+        </li>
       </ul>
     </li>
+
     </ul>
   </div>
 
@@ -1058,40 +1074,47 @@ table {
 
 
   <header id="section-intro">
-  <h1 class="title"><span class="name">concrete</span> module</h1>
-  <p>Python modules and scripts for working with
-<a href="https://github.com/hltcoe/concrete">Concrete</a>, an HLT data
-specification defined using <a href="http://thrift.apache.org">Thrift</a>.</p>
+  <h1 class="title"><span class="name">concrete.util.thrift_factory</span> module</h1>
   
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete', this);">Show source &equiv;</a></p>
-  <div id="source-concrete" class="source">
-    <div class="codehilite"><pre><span></span><span class="c1"># This file is NOT auto-generated</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Python modules and scripts for working with</span>
-<span class="sd">[Concrete](https://github.com/hltcoe/concrete), an HLT data</span>
-<span class="sd">specification defined using [Thrift](http://thrift.apache.org).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory" class="source">
+    <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">thrift.transport</span> <span class="kn">import</span> <span class="n">TSocket</span>
+<span class="kn">from</span> <span class="nn">thrift.transport</span> <span class="kn">import</span> <span class="n">TTransport</span>
+<span class="kn">from</span> <span class="nn">thrift.protocol</span> <span class="kn">import</span> <span class="n">TCompactProtocol</span>
+<span class="kn">from</span> <span class="nn">thrift.server</span> <span class="kn">import</span> <span class="n">TServer</span>
 
 
-<span class="kn">from</span> <span class="nn">audio.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">clustering.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">communication.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">email.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">entities.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">exceptions.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">language.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">linking.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">metadata.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">nitf.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">services.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">situations.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">spans.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">structure.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">twitter.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">uuid.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="k">class</span> <span class="nc">ThriftFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract factory to create Thrift objects for client and server.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">version</span> <span class="kn">import</span> <span class="n">__version__</span>  <span class="c1"># noqa</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transportFactory</span><span class="p">,</span> <span class="n">protocolFactory</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span> <span class="o">=</span> <span class="n">transportFactory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span> <span class="o">=</span> <span class="n">protocolFactory</span>
+
+    <span class="k">def</span> <span class="nf">createSocket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="n">socket</span> <span class="o">=</span> <span class="n">TSocket</span><span class="o">.</span><span class="n">TSocket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">socket</span>
+
+    <span class="k">def</span> <span class="nf">createTransport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">socket</span><span class="p">):</span>
+        <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span><span class="o">.</span><span class="n">getTransport</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">transport</span>
+
+    <span class="k">def</span> <span class="nf">createProtocol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
+        <span class="n">protocol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span><span class="o">.</span><span class="n">getProtocol</span><span class="p">(</span><span class="n">transport</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">protocol</span>
+
+    <span class="k">def</span> <span class="nf">createServer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">processor</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="n">socket</span> <span class="o">=</span> <span class="n">TSocket</span><span class="o">.</span><span class="n">TServerSocket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+
+        <span class="n">server</span> <span class="o">=</span> <span class="n">TServer</span><span class="o">.</span><span class="n">TThreadedServer</span><span class="p">(</span><span class="n">processor</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">server</span>
+
+
+<span class="n">factory</span> <span class="o">=</span> <span class="n">ThriftFactory</span><span class="p">(</span><span class="n">TTransport</span><span class="o">.</span><span class="n">TFramedTransportFactory</span><span class="p">(),</span>
+                        <span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
 </pre></div>
 
   </div>
@@ -1099,41 +1122,203 @@ specification defined using <a href="http://thrift.apache.org">Thrift</a>.</p>
   </header>
 
   <section id="section-items">
-
-
-
-    <h2 class="section-title" id="header-submodules">Sub-modules</h2>
+    <h2 class="section-title" id="header-variables">Module variables</h2>
       <div class="item">
-      <p class="name"><a href="inspect.m.html">concrete.inspect</a></p>
+      <p id="concrete.util.thrift_factory.factory" class="name">var <span class="ident">factory</span></p>
       
   
-    <div class="desc"><p>Functions used by <code>concrete_inspect.py</code> to print data in a Communication.</p>
-<p>The function implementations provide useful examples of how to
-interact with many different Concrete datastructures.</p></div>
+  <div class="source_cont">
+</div>
 
       </div>
+
+
+    <h2 class="section-title" id="header-classes">Classes</h2>
+      
       <div class="item">
-      <p class="name"><a href="util/index.html">concrete.util</a></p>
+      <p id="concrete.util.thrift_factory.ThriftFactory" class="name">class <span class="ident">ThriftFactory</span></p>
       
   
-    <div class="desc"><p>Utility code for working with Concrete</p></div>
+    <div class="desc"><p>Abstract factory to create Thrift objects for client and server.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory.ThriftFactory', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory.ThriftFactory" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ThriftFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract factory to create Thrift objects for client and server.&quot;&quot;&quot;</span>
 
-      </div>
-      <div class="item">
-      <p class="name"><a href="validate.m.html">concrete.validate</a></p>
-      
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transportFactory</span><span class="p">,</span> <span class="n">protocolFactory</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span> <span class="o">=</span> <span class="n">transportFactory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span> <span class="o">=</span> <span class="n">protocolFactory</span>
+
+    <span class="k">def</span> <span class="nf">createSocket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="n">socket</span> <span class="o">=</span> <span class="n">TSocket</span><span class="o">.</span><span class="n">TSocket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">socket</span>
+
+    <span class="k">def</span> <span class="nf">createTransport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">socket</span><span class="p">):</span>
+        <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span><span class="o">.</span><span class="n">getTransport</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">transport</span>
+
+    <span class="k">def</span> <span class="nf">createProtocol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
+        <span class="n">protocol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span><span class="o">.</span><span class="n">getProtocol</span><span class="p">(</span><span class="n">transport</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">protocol</span>
+
+    <span class="k">def</span> <span class="nf">createServer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">processor</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="n">socket</span> <span class="o">=</span> <span class="n">TSocket</span><span class="o">.</span><span class="n">TServerSocket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+
+        <span class="n">server</span> <span class="o">=</span> <span class="n">TServer</span><span class="o">.</span><span class="n">TThreadedServer</span><span class="p">(</span><span class="n">processor</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">server</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#concrete.util.thrift_factory.ThriftFactory">ThriftFactory</a></li>
+          <li>__builtin__.object</li>
+          </ul>
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="concrete.util.thrift_factory.ThriftFactory.protocolFactory" class="name">var <span class="ident">protocolFactory</span></p>
+            
+
+            
   
-    <div class="desc"><p>Library to validate a Concrete Communication</p>
-<p>Current validation checks:</p>
-<ul>
-<li>for each constituent parse, do any of the constituent ID's for
-    that parse repeat?</li>
-<li>is each dependency and constituent parse a fully connected graph?</li>
-<li>is each constituent parse "tree" really a tree?</li>
-<li>for each d...</li>
-</ul></div>
+  <div class="source_cont">
+</div>
 
+            </div>
+            <div class="item">
+            <p id="concrete.util.thrift_factory.ThriftFactory.transportFactory" class="name">var <span class="ident">transportFactory</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.thrift_factory.ThriftFactory.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, transportFactory, protocolFactory)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory.ThriftFactory.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory.ThriftFactory.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transportFactory</span><span class="p">,</span> <span class="n">protocolFactory</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span> <span class="o">=</span> <span class="n">transportFactory</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span> <span class="o">=</span> <span class="n">protocolFactory</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.thrift_factory.ThriftFactory.createProtocol">
+    <p>def <span class="ident">createProtocol</span>(</p><p>self, transport)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory.ThriftFactory.createProtocol', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory.ThriftFactory.createProtocol" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">createProtocol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span><span class="o">.</span><span class="n">getProtocol</span><span class="p">(</span><span class="n">transport</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">protocol</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.thrift_factory.ThriftFactory.createServer">
+    <p>def <span class="ident">createServer</span>(</p><p>self, processor, host, port)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory.ThriftFactory.createServer', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory.ThriftFactory.createServer" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">createServer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">processor</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+    <span class="n">socket</span> <span class="o">=</span> <span class="n">TSocket</span><span class="o">.</span><span class="n">TServerSocket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">TServer</span><span class="o">.</span><span class="n">TThreadedServer</span><span class="p">(</span><span class="n">processor</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">server</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.thrift_factory.ThriftFactory.createSocket">
+    <p>def <span class="ident">createSocket</span>(</p><p>self, host, port)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory.ThriftFactory.createSocket', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory.ThriftFactory.createSocket" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">createSocket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+    <span class="n">socket</span> <span class="o">=</span> <span class="n">TSocket</span><span class="o">.</span><span class="n">TSocket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">socket</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.thrift_factory.ThriftFactory.createTransport">
+    <p>def <span class="ident">createTransport</span>(</p><p>self, socket)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.thrift_factory.ThriftFactory.createTransport', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.thrift_factory.ThriftFactory.createTransport" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">createTransport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">socket</span><span class="p">):</span>
+    <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transportFactory</span><span class="o">.</span><span class="n">getTransport</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">transport</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
       </div>
+      </div>
+
   </section>
 
     </article>

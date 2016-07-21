@@ -3,9 +3,8 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
-    <title>concrete API documentation</title>
-    <meta name="description" content="Python modules and scripts for working with
-[Concrete](https://github.com/hltcoe/concrete), an HLT d..." />
+    <title>concrete.util.mem_io API documentation</title>
+    <meta name="description" content="" />
 
   <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   
@@ -1038,15 +1037,17 @@ table {
     <h1>Index</h1>
     <ul id="index">
 
+    <li class="set"><h3><a href="#header-functions">Functions</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#concrete.util.mem_io.communication_deep_copy">communication_deep_copy</a></li>
+    <li class="mono"><a href="#concrete.util.mem_io.read_communication_from_buffer">read_communication_from_buffer</a></li>
+    <li class="mono"><a href="#concrete.util.mem_io.write_communication_to_buffer">write_communication_to_buffer</a></li>
+  </ul>
 
-
-    <li class="set"><h3><a href="#header-submodules">Sub-modules</a></h3>
-      <ul>
-        <li class="mono"><a href="inspect.m.html">concrete.inspect</a></li>
-        <li class="mono"><a href="util/index.html">concrete.util</a></li>
-        <li class="mono"><a href="validate.m.html">concrete.validate</a></li>
-      </ul>
     </li>
+
+
     </ul>
   </div>
 
@@ -1058,40 +1059,50 @@ table {
 
 
   <header id="section-intro">
-  <h1 class="title"><span class="name">concrete</span> module</h1>
-  <p>Python modules and scripts for working with
-<a href="https://github.com/hltcoe/concrete">Concrete</a>, an HLT data
-specification defined using <a href="http://thrift.apache.org">Thrift</a>.</p>
+  <h1 class="title"><span class="name">concrete.util.mem_io</span> module</h1>
   
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete', this);">Show source &equiv;</a></p>
-  <div id="source-concrete" class="source">
-    <div class="codehilite"><pre><span></span><span class="c1"># This file is NOT auto-generated</span>
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.mem_io', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.mem_io" class="source">
+    <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">thrift.transport.TTransport</span> <span class="kn">import</span> <span class="n">TMemoryBuffer</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Python modules and scripts for working with</span>
-<span class="sd">[Concrete](https://github.com/hltcoe/concrete), an HLT data</span>
-<span class="sd">specification defined using [Thrift](http://thrift.apache.org).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">concrete.util.thrift_factory</span> <span class="kn">import</span> <span class="n">factory</span>
+<span class="kn">from</span> <span class="nn">concrete.util.references</span> <span class="kn">import</span> <span class="n">add_references_to_communication</span>
+<span class="kn">from</span> <span class="nn">concrete</span> <span class="kn">import</span> <span class="n">Communication</span>
 
 
-<span class="kn">from</span> <span class="nn">audio.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">clustering.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">communication.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">email.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">entities.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">exceptions.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">language.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">linking.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">metadata.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">nitf.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">services.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">situations.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">spans.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">structure.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">twitter.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">uuid.ttypes</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="k">def</span> <span class="nf">read_communication_from_buffer</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Deserialize buf (a binary string) and return resulting</span>
+<span class="sd">    communication.  Add references if requested.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">transport_in</span> <span class="o">=</span> <span class="n">TMemoryBuffer</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+    <span class="n">protocol_in</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="n">transport_in</span><span class="p">)</span>
+    <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">protocol_in</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_references</span><span class="p">:</span>
+        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">comm</span>
 
-<span class="kn">from</span> <span class="nn">version</span> <span class="kn">import</span> <span class="n">__version__</span>  <span class="c1"># noqa</span>
+
+<span class="k">def</span> <span class="nf">write_communication_to_buffer</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Serialize communication to buffer (binary string) and return</span>
+<span class="sd">    buffer.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">transport</span> <span class="o">=</span> <span class="n">TMemoryBuffer</span><span class="p">()</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="n">transport</span><span class="p">)</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">transport</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">communication_deep_copy</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return deep copy of communication.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">read_communication_from_buffer</span><span class="p">(</span>
+        <span class="n">write_communication_to_buffer</span><span class="p">(</span><span class="n">comm</span><span class="p">),</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">False</span>
+    <span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1100,40 +1111,99 @@ specification defined using <a href="http://thrift.apache.org">Thrift</a>.</p>
 
   <section id="section-items">
 
-
-
-    <h2 class="section-title" id="header-submodules">Sub-modules</h2>
-      <div class="item">
-      <p class="name"><a href="inspect.m.html">concrete.inspect</a></p>
+    <h2 class="section-title" id="header-functions">Functions</h2>
       
-  
-    <div class="desc"><p>Functions used by <code>concrete_inspect.py</code> to print data in a Communication.</p>
-<p>The function implementations provide useful examples of how to
-interact with many different Concrete datastructures.</p></div>
+  <div class="item">
+    <div class="name def" id="concrete.util.mem_io.communication_deep_copy">
+    <p>def <span class="ident">communication_deep_copy</span>(</p><p>comm)</p>
+    </div>
+    
 
-      </div>
-      <div class="item">
-      <p class="name"><a href="util/index.html">concrete.util</a></p>
+    
+  
+    <div class="desc"><p>Return deep copy of communication.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.mem_io.communication_deep_copy', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.mem_io.communication_deep_copy" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">communication_deep_copy</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return deep copy of communication.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">read_communication_from_buffer</span><span class="p">(</span>
+        <span class="n">write_communication_to_buffer</span><span class="p">(</span><span class="n">comm</span><span class="p">),</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">False</span>
+    <span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
       
-  
-    <div class="desc"><p>Utility code for working with Concrete</p></div>
+  <div class="item">
+    <div class="name def" id="concrete.util.mem_io.read_communication_from_buffer">
+    <p>def <span class="ident">read_communication_from_buffer</span>(</p><p>buf, add_references=True)</p>
+    </div>
+    
 
-      </div>
-      <div class="item">
-      <p class="name"><a href="validate.m.html">concrete.validate</a></p>
+    
+  
+    <div class="desc"><p>Deserialize buf (a binary string) and return resulting
+communication.  Add references if requested.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.mem_io.read_communication_from_buffer', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.mem_io.read_communication_from_buffer" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">read_communication_from_buffer</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Deserialize buf (a binary string) and return resulting</span>
+<span class="sd">    communication.  Add references if requested.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">transport_in</span> <span class="o">=</span> <span class="n">TMemoryBuffer</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+    <span class="n">protocol_in</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="n">transport_in</span><span class="p">)</span>
+    <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">protocol_in</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_references</span><span class="p">:</span>
+        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">comm</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
       
-  
-    <div class="desc"><p>Library to validate a Concrete Communication</p>
-<p>Current validation checks:</p>
-<ul>
-<li>for each constituent parse, do any of the constituent ID's for
-    that parse repeat?</li>
-<li>is each dependency and constituent parse a fully connected graph?</li>
-<li>is each constituent parse "tree" really a tree?</li>
-<li>for each d...</li>
-</ul></div>
+  <div class="item">
+    <div class="name def" id="concrete.util.mem_io.write_communication_to_buffer">
+    <p>def <span class="ident">write_communication_to_buffer</span>(</p><p>comm)</p>
+    </div>
+    
 
-      </div>
+    
+  
+    <div class="desc"><p>Serialize communication to buffer (binary string) and return
+buffer.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.mem_io.write_communication_to_buffer', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.mem_io.write_communication_to_buffer" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">write_communication_to_buffer</span><span class="p">(</span><span class="n">comm</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Serialize communication to buffer (binary string) and return</span>
+<span class="sd">    buffer.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">transport</span> <span class="o">=</span> <span class="n">TMemoryBuffer</span><span class="p">()</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="n">transport</span><span class="p">)</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">transport</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+
+
   </section>
 
     </article>

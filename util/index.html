@@ -554,7 +554,7 @@ table {
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
   body {
     background: #fff;
@@ -858,8 +858,10 @@ table {
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
 .codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
 .codehilite .gd { color: #A00000 } /* Generic.Deleted */
@@ -1039,13 +1041,20 @@ table {
 
     <li class="set"><h3><a href="#header-submodules">Sub-modules</a></h3>
       <ul>
+        <li class="mono"><a href="annotator_wrapper.m.html">concrete.util.annotator_wrapper</a></li>
         <li class="mono"><a href="concrete_uuid.m.html">concrete.util.concrete_uuid</a></li>
         <li class="mono"><a href="file_io.m.html">concrete.util.file_io</a></li>
         <li class="mono"><a href="json_fu.m.html">concrete.util.json_fu</a></li>
-        <li class="mono"><a href="old_twitter.m.html">concrete.util.old_twitter</a></li>
+        <li class="mono"><a href="mem_io.m.html">concrete.util.mem_io</a></li>
+        <li class="mono"><a href="net.m.html">concrete.util.net</a></li>
+        <li class="mono"><a href="redis_io.m.html">concrete.util.redis_io</a></li>
         <li class="mono"><a href="references.m.html">concrete.util.references</a></li>
+        <li class="mono"><a href="search_wrapper.m.html">concrete.util.search_wrapper</a></li>
         <li class="mono"><a href="simple_comm.m.html">concrete.util.simple_comm</a></li>
+        <li class="mono"><a href="thrift_factory.m.html">concrete.util.thrift_factory</a></li>
+        <li class="mono"><a href="tokenization.m.html">concrete.util.tokenization</a></li>
         <li class="mono"><a href="twitter.m.html">concrete.util.twitter</a></li>
+        <li class="mono"><a href="unnone.m.html">concrete.util.unnone</a></li>
       </ul>
     </li>
     </ul>
@@ -1064,13 +1073,17 @@ table {
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Utility code for working with Concrete</span>
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;Utility code for working with Concrete</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">concrete_uuid</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">file_io</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">json_fu</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">references</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">concrete_uuid</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">file_io</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">mem_io</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">redis_io</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">json_fu</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">references</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">tokenization</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">unnone</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa</span>
 </pre></div>
 
   </div>
@@ -1083,10 +1096,16 @@ table {
 
     <h2 class="section-title" id="header-submodules">Sub-modules</h2>
       <div class="item">
+      <p class="name"><a href="annotator_wrapper.m.html">concrete.util.annotator_wrapper</a></p>
+      
+  
+
+      </div>
+      <div class="item">
       <p class="name"><a href="concrete_uuid.m.html">concrete.util.concrete_uuid</a></p>
       
   
-    <div class="desc"><p>Helper function for generating a Concrete UUID object</p></div>
+    <div class="desc"><p>Helper functions for generating Concrete UUIDs</p></div>
 
       </div>
       <div class="item">
@@ -1104,12 +1123,21 @@ table {
 
       </div>
       <div class="item">
-      <p class="name"><a href="old_twitter.m.html">concrete.util.old_twitter</a></p>
+      <p class="name"><a href="mem_io.m.html">concrete.util.mem_io</a></p>
       
   
-    <div class="desc"><p>Convert between JSON and Concrete representations of Tweets</p>
-<p>The fields used by the Twitter API are documented at:</p>
-<p>https://dev.twitter.com/overview/api/tweets</p></div>
+
+      </div>
+      <div class="item">
+      <p class="name"><a href="net.m.html">concrete.util.net</a></p>
+      
+  
+
+      </div>
+      <div class="item">
+      <p class="name"><a href="redis_io.m.html">concrete.util.redis_io</a></p>
+      
+  
 
       </div>
       <div class="item">
@@ -1120,10 +1148,28 @@ table {
 
       </div>
       <div class="item">
+      <p class="name"><a href="search_wrapper.m.html">concrete.util.search_wrapper</a></p>
+      
+  
+
+      </div>
+      <div class="item">
       <p class="name"><a href="simple_comm.m.html">concrete.util.simple_comm</a></p>
       
   
     <div class="desc"><p>Create a simple (valid) Communication suitable for testing purposes</p></div>
+
+      </div>
+      <div class="item">
+      <p class="name"><a href="thrift_factory.m.html">concrete.util.thrift_factory</a></p>
+      
+  
+
+      </div>
+      <div class="item">
+      <p class="name"><a href="tokenization.m.html">concrete.util.tokenization</a></p>
+      
+  
 
       </div>
       <div class="item">
@@ -1135,6 +1181,12 @@ table {
 <p>https://dev.twitter.com/overview/api/tweets</p></div>
 
       </div>
+      <div class="item">
+      <p class="name"><a href="unnone.m.html">concrete.util.unnone</a></p>
+      
+  
+
+      </div>
   </section>
 
     </article>
@@ -1142,7 +1194,7 @@ table {
   <footer id="footer">
     <p>
       Documentation generated by
-      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.1</a>
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
     </p>
 
     <p>pdoc is in the public domain with the

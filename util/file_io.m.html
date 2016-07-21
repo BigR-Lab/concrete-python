@@ -554,7 +554,7 @@ table {
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
   body {
     background: #fff;
@@ -858,8 +858,10 @@ table {
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
 .codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
 .codehilite .gd { color: #A00000 } /* Generic.Deleted */
@@ -1034,6 +1036,13 @@ table {
   <div id="sidebar">
     <h1>Index</h1>
     <ul id="index">
+    <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#concrete.util.file_io.FileType">FileType</a></li>
+  </ul>
+
+    </li>
 
     <li class="set"><h3><a href="#header-functions">Functions</a></h3>
       
@@ -1064,6 +1073,7 @@ table {
         
           
   <ul>
+    <li class="mono"><a href="#concrete.util.file_io.CommunicationWriter.__init__">__init__</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationWriter.close">close</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationWriter.open">open</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationWriter.write">write</a></li>
@@ -1075,9 +1085,22 @@ table {
         
           
   <ul>
+    <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTGZ.__init__">__init__</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTGZ.close">close</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTGZ.open">open</a></li>
     <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTGZ.write">write</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTar.__init__">__init__</a></li>
+    <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTar.close">close</a></li>
+    <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTar.open">open</a></li>
+    <li class="mono"><a href="#concrete.util.file_io.CommunicationWriterTar.write">write</a></li>
   </ul>
 
         </li>
@@ -1100,22 +1123,28 @@ table {
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io" class="source">
-    <div class="codehilite"><pre><span class="sd">&quot;&quot;&quot;Code for reading and writing Concrete Communications</span>
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;Code for reading and writing Concrete Communications</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">cStringIO</span>
 <span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">bz2</span>
 <span class="kn">import</span> <span class="nn">mimetypes</span>
 <span class="kn">import</span> <span class="nn">os.path</span>
 <span class="kn">import</span> <span class="nn">tarfile</span>
 <span class="kn">import</span> <span class="nn">zipfile</span>
 
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pwd</span>
+<span class="kn">import</span> <span class="nn">grp</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
 <span class="kn">from</span> <span class="nn">thrift</span> <span class="kn">import</span> <span class="n">TSerialization</span>
-<span class="kn">from</span> <span class="nn">thrift.protocol</span> <span class="kn">import</span> <span class="n">TCompactProtocol</span>
 <span class="kn">from</span> <span class="nn">thrift.transport</span> <span class="kn">import</span> <span class="n">TTransport</span>
 
 <span class="kn">from</span> <span class="nn">concrete</span> <span class="kn">import</span> <span class="n">Communication</span><span class="p">,</span> <span class="n">TokenLattice</span>
 <span class="kn">from</span> <span class="nn">concrete.util.references</span> <span class="kn">import</span> <span class="n">add_references_to_communication</span>
+<span class="kn">from</span> <span class="nn">concrete.util.thrift_factory</span> <span class="kn">import</span> <span class="n">factory</span>
 
 
 <span class="k">def</span> <span class="nf">read_thrift_from_file</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
@@ -1136,13 +1165,16 @@ table {
 
 <span class="sd">    -  The Thrift object that was passed in as an argument</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">)</span>
+    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
     <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">thrift_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">thrift_bytes</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
+    <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
+        <span class="n">thrift_obj</span><span class="p">,</span> <span class="n">thrift_bytes</span><span class="p">,</span>
+        <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
     <span class="n">thrift_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">thrift_obj</span>
 
-<span class="k">def</span> <span class="nf">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">):</span>
+
+<span class="k">def</span> <span class="nf">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a Communication from the file specified by filename</span>
 
 <span class="sd">    Args:</span>
@@ -1154,8 +1186,10 @@ table {
 <span class="sd">    - A Concrete `Communication` object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_thrift_from_file</span><span class="p">(</span><span class="n">Communication</span><span class="p">(),</span> <span class="n">communication_filename</span><span class="p">)</span>
-    <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_references</span><span class="p">:</span>
+        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">comm</span>
+
 
 <span class="k">def</span> <span class="nf">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">tokenlattice_filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1165,18 +1199,83 @@ table {
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">read_thrift_from_file</span><span class="p">(</span><span class="n">TokenLattice</span><span class="p">(),</span> <span class="n">tokenlattice_filename</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">write_communication_to_file</span><span class="p">(</span><span class="n">communication</span><span class="p">,</span> <span class="n">communication_filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">write_thrift_to_file</span><span class="p">(</span><span class="n">communication</span><span class="p">,</span> <span class="n">communication_filename</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">write_thrift_to_file</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
-    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;wb&quot;</span><span class="p">)</span>
+    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">thrift_obj</span><span class="p">,</span>
+        <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
     <span class="n">thrift_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
     <span class="n">thrift_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 
-<span class="k">class</span> <span class="nc">CommunicationReader</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Iterator/generator class for reading one or more Communications from a file</span>
+<span class="k">class</span> <span class="nc">_FileTypeClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    An instance of this class represents filetypes abstractly; its</span>
+<span class="sd">    members correspond to individual filetypes.  It probably doesn&#39;t</span>
+<span class="sd">    make sense to have more than one instance of this class.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">names</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">CHOICES</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;CHOICES&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> is an invalid filetype name&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">i</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ft</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return filetype (integer value) for ft, where ft may be</span>
+<span class="sd">        a filetype name or (for convenience) the filetype integer</span>
+<span class="sd">        value itself.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ft</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ft</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ft</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ft</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">ft</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown filetype </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">ft</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">add_argument</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argparse_parser</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="s1">&#39;--input-filetype&#39;</span><span class="p">,</span>
+                     <span class="n">help_name</span><span class="o">=</span><span class="s1">&#39;input file&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add filetype argument to parser, return function that can be</span>
+<span class="sd">        called on argparse namespace to retrieve argument value, e.g.,</span>
+
+<span class="sd">        &gt;&gt;&gt; get_filetype = add_argument(parser, ...)</span>
+<span class="sd">        &gt;&gt;&gt; ns = parser.parse_args()</span>
+<span class="sd">        &gt;&gt;&gt; filetype = get_filetype(ns)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">argparse_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">CHOICES</span><span class="p">,</span>
+                                     <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">CHOICES</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                     <span class="n">help</span><span class="o">=</span><span class="s1">&#39;filetype for </span><span class="si">%s</span><span class="s1"> (choices: </span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span>
+                                          <span class="p">(</span><span class="n">help_name</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CHOICES</span><span class="p">)))</span>
+
+        <span class="k">def</span> <span class="nf">_get_value</span><span class="p">(</span><span class="n">ns</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">flag</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_get_value</span>
+
+
+<span class="n">FileType</span> <span class="o">=</span> <span class="n">_FileTypeClass</span><span class="p">(</span>
+    <span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;zip&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tar&#39;</span><span class="p">,</span> <span class="s1">&#39;tar-gz&#39;</span><span class="p">,</span> <span class="s1">&#39;tar-bz2&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;stream&#39;</span><span class="p">,</span> <span class="s1">&#39;stream-gz&#39;</span><span class="p">,</span> <span class="s1">&#39;stream-bz2&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">CommunicationReader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator/generator class for reading one or more Communications from a</span>
+<span class="sd">    file</span>
 
 <span class="sd">    The iterator returns a `(Communication, filename)` tuple</span>
 
@@ -1196,27 +1295,77 @@ table {
 <span class="sd">        for (comm, filename) in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):</span>
 <span class="sd">            do_something(comm)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">filetype</span><span class="o">=</span><span class="n">FileType</span><span class="o">.</span><span class="n">AUTO</span><span class="p">):</span>
+        <span class="n">filetype</span> <span class="o">=</span> <span class="n">FileType</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">filetype</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span> <span class="o">=</span> <span class="n">add_references</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="k">if</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">is_tarfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-            <span class="c"># File is either a &#39;.tar&#39; or &#39;.tar.gz&#39; file</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;tar&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;zip&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR_GZ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|gz&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR_BZ2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|bz2&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">ZIP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;zip&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;gzip&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;stream&#39;</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;stream&#39;</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM_GZ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM_BZ2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">is_tarfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|*&#39;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;zip&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gzip&#39;</span><span class="p">:</span>
+                <span class="c1"># this is not a true stream---is_tarfile will have</span>
+                <span class="c1"># successfully seeked backwards on the file if we have</span>
+                <span class="c1"># reached this point</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;bzip2&#39;</span><span class="p">:</span>
+                <span class="c1"># this is not a true stream</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># this is not a true stream</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown filetype </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">filetype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;stream&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span> <span class="o">=</span> <span class="n">TTransport</span><span class="o">.</span><span class="n">TFileObjectTransport</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1233,18 +1382,19 @@ table {
 <span class="sd">        Communications extracted from the concatenated file will have the</span>
 <span class="sd">        same value for the `filename` field.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;stream&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_stream</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;tar&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_tar</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;zip&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_zip</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
             <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
-            <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span><span class="p">:</span>
+                <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -1256,18 +1406,22 @@ table {
             <span class="k">if</span> <span class="n">tarinfo</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">StopIteration</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">isfile</span><span class="p">():</span>
-                <span class="c"># Ignore directories</span>
+                <span class="c1"># Ignore directories</span>
                 <span class="k">continue</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="s">&#39;.&#39;</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>
-                <span class="c"># Ignore attribute files created by OS X tar</span>
+            <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="s1">&#39;.&#39;</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+                <span class="c1"># Ignore attribute files created by OS X tar</span>
                 <span class="k">continue</span>
             <span class="n">comm</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
                 <span class="n">Communication</span><span class="p">(),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">extractfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-                <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-            <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span><span class="p">:</span>
+                <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="c1"># hack to keep memory usage O(1)</span>
+            <span class="c1"># (...but the real hack is tarfile :)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">members</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">):</span>
@@ -1277,12 +1431,13 @@ table {
         <span class="n">comm</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
             <span class="n">Communication</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zipinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-            <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span><span class="p">:</span>
+            <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">zipinfo</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">CommunicationWriter</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">CommunicationWriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a file</span>
 
 <span class="sd">    -----</span>
@@ -1293,18 +1448,84 @@ table {
 <span class="sd">        writer.write(existing_comm_object)</span>
 <span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
-        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
+        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+            <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
-<span class="k">class</span> <span class="nc">CommunicationWriterTGZ</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">CommunicationWriterTar</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a .TAR archive</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        writer = CommunicationWriterTar(&#39;multiple_comms.tar&#39;)</span>
+<span class="sd">        writer.write(comm_object_one, &#39;comm_one.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_two, &#39;comm_two.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_three, &#39;comm_three.concrete&#39;)</span>
+<span class="sd">        writer.close()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">gzip</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="o">=</span> <span class="n">gzip</span>
+        <span class="k">if</span> <span class="n">tar_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s1">&#39;w:gz&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="k">else</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">comm_filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">comm_filename</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">+</span> <span class="s1">&#39;.concrete&#39;</span>
+
+        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+            <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+
+        <span class="n">file_like_obj</span> <span class="o">=</span> <span class="n">cStringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+
+        <span class="n">comm_tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">REGTYPE</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">comm_filename</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="mo">0644</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uname</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())</span><span class="o">.</span><span class="n">pw_name</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gname</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrgid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">())</span><span class="o">.</span><span class="n">gr_name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">comm_tarinfo</span><span class="p">,</span> <span class="n">file_like_obj</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">CommunicationWriterTGZ</span><span class="p">(</span><span class="n">CommunicationWriterTar</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a .TAR.GZ archive</span>
 
 <span class="sd">    -----</span>
@@ -1317,22 +1538,9 @@ table {
 <span class="sd">        writer.write(comm_object_three, &#39;comm_three.concrete&#39;)</span>
 <span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s">&#39;w:gz&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="p">):</span>
-        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-
-        <span class="n">file_like_obj</span> <span class="o">=</span> <span class="n">cStringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
-
-        <span class="n">comm_tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
-        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">comm_filename</span>
-        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">comm_tarinfo</span><span class="p">,</span> <span class="n">file_like_obj</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CommunicationWriterTGZ</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="n">gzip</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1340,12 +1548,21 @@ table {
   </header>
 
   <section id="section-items">
+    <h2 class="section-title" id="header-variables">Module variables</h2>
+      <div class="item">
+      <p id="concrete.util.file_io.FileType" class="name">var <span class="ident">FileType</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
 
     <h2 class="section-title" id="header-functions">Functions</h2>
       
   <div class="item">
     <div class="name def" id="concrete.util.file_io.read_communication_from_file">
-    <p>def <span class="ident">read_communication_from_file</span>(</p><p>communication_filename)</p>
+    <p>def <span class="ident">read_communication_from_file</span>(</p><p>communication_filename, add_references=True)</p>
     </div>
     
 
@@ -1363,7 +1580,7 @@ table {
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.read_communication_from_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.read_communication_from_file" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">read_communication_from_file</span><span class="p">(</span><span class="n">communication_filename</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a Communication from the file specified by filename</span>
 
 <span class="sd">    Args:</span>
@@ -1375,7 +1592,8 @@ table {
 <span class="sd">    - A Concrete `Communication` object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">comm</span> <span class="o">=</span> <span class="n">read_thrift_from_file</span><span class="p">(</span><span class="n">Communication</span><span class="p">(),</span> <span class="n">communication_filename</span><span class="p">)</span>
-    <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_references</span><span class="p">:</span>
+        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">comm</span>
 </pre></div>
 
@@ -1410,7 +1628,7 @@ deserialize data from the file <code>/dev/urandom</code>.</p>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.read_thrift_from_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.read_thrift_from_file" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">read_thrift_from_file</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">read_thrift_from_file</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Instantiate Thrift object from contents of named file</span>
 
 <span class="sd">    The Thrift file is assumed to be encoded using TCompactProtocol</span>
@@ -1428,9 +1646,11 @@ deserialize data from the file <code>/dev/urandom</code>.</p>
 
 <span class="sd">    -  The Thrift object that was passed in as an argument</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">)</span>
+    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
     <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">thrift_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">thrift_bytes</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
+    <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
+        <span class="n">thrift_obj</span><span class="p">,</span> <span class="n">thrift_bytes</span><span class="p">,</span>
+        <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
     <span class="n">thrift_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">thrift_obj</span>
 </pre></div>
@@ -1455,7 +1675,7 @@ TokenLattice instance.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.read_tokenlattice_from_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.read_tokenlattice_from_file" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">tokenlattice_filename</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">read_tokenlattice_from_file</span><span class="p">(</span><span class="n">tokenlattice_filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Takes the filename of a serialized Concrete TokenLattice file,</span>
 <span class="sd">    reads the TokenLattice from the file and returns an instantiated</span>
@@ -1481,7 +1701,7 @@ TokenLattice instance.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.write_communication_to_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.write_communication_to_file" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">write_communication_to_file</span><span class="p">(</span><span class="n">communication</span><span class="p">,</span> <span class="n">communication_filename</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">write_communication_to_file</span><span class="p">(</span><span class="n">communication</span><span class="p">,</span> <span class="n">communication_filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">write_thrift_to_file</span><span class="p">(</span><span class="n">communication</span><span class="p">,</span> <span class="n">communication_filename</span><span class="p">)</span>
 </pre></div>
 
@@ -1502,9 +1722,11 @@ TokenLattice instance.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.write_thrift_to_file', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.write_thrift_to_file" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">write_thrift_to_file</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
-    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;wb&quot;</span><span class="p">)</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">write_thrift_to_file</span><span class="p">(</span><span class="n">thrift_obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">thrift_obj</span><span class="p">,</span>
+        <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+    <span class="n">thrift_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
     <span class="n">thrift_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
     <span class="n">thrift_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
@@ -1521,7 +1743,8 @@ TokenLattice instance.</p></div>
       <p id="concrete.util.file_io.CommunicationReader" class="name">class <span class="ident">CommunicationReader</span></p>
       
   
-    <div class="desc"><p>Iterator/generator class for reading one or more Communications from a file</p>
+    <div class="desc"><p>Iterator/generator class for reading one or more Communications from a
+file</p>
 <p>The iterator returns a <code>(Communication, filename)</code> tuple</p>
 <p>Supported filetypes are:</p>
 <ul>
@@ -1534,14 +1757,15 @@ TokenLattice instance.</p></div>
 </ul>
 <hr />
 <p>Sample usage:</p>
-<div class="codehilite"><pre>for (comm, filename) in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):
+<div class="codehilite"><pre><span></span>for (comm, filename) in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):
     do_something(comm)
 </pre></div></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationReader" class="source">
-    <div class="codehilite"><pre><span class="k">class</span> <span class="nc">CommunicationReader</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Iterator/generator class for reading one or more Communications from a file</span>
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">CommunicationReader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator/generator class for reading one or more Communications from a</span>
+<span class="sd">    file</span>
 
 <span class="sd">    The iterator returns a `(Communication, filename)` tuple</span>
 
@@ -1561,27 +1785,77 @@ TokenLattice instance.</p></div>
 <span class="sd">        for (comm, filename) in CommunicationReader(&#39;multiple_comms.tar.gz&#39;):</span>
 <span class="sd">            do_something(comm)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">filetype</span><span class="o">=</span><span class="n">FileType</span><span class="o">.</span><span class="n">AUTO</span><span class="p">):</span>
+        <span class="n">filetype</span> <span class="o">=</span> <span class="n">FileType</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">filetype</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span> <span class="o">=</span> <span class="n">add_references</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="k">if</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">is_tarfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-            <span class="c"># File is either a &#39;.tar&#39; or &#39;.tar.gz&#39; file</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;tar&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;zip&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR_GZ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|gz&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR_BZ2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|bz2&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">ZIP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;zip&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;gzip&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;stream&#39;</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;stream&#39;</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM_GZ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM_BZ2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">is_tarfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|*&#39;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;zip&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gzip&#39;</span><span class="p">:</span>
+                <span class="c1"># this is not a true stream---is_tarfile will have</span>
+                <span class="c1"># successfully seeked backwards on the file if we have</span>
+                <span class="c1"># reached this point</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;bzip2&#39;</span><span class="p">:</span>
+                <span class="c1"># this is not a true stream</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># this is not a true stream</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown filetype </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">filetype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;stream&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span> <span class="o">=</span> <span class="n">TTransport</span><span class="o">.</span><span class="n">TFileObjectTransport</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1598,18 +1872,19 @@ TokenLattice instance.</p></div>
 <span class="sd">        Communications extracted from the concatenated file will have the</span>
 <span class="sd">        same value for the `filename` field.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;stream&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_stream</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;tar&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_tar</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;zip&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_zip</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_next_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">comm</span> <span class="o">=</span> <span class="n">Communication</span><span class="p">()</span>
             <span class="n">comm</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
-            <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span><span class="p">:</span>
+                <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -1621,18 +1896,22 @@ TokenLattice instance.</p></div>
             <span class="k">if</span> <span class="n">tarinfo</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">StopIteration</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">isfile</span><span class="p">():</span>
-                <span class="c"># Ignore directories</span>
+                <span class="c1"># Ignore directories</span>
                 <span class="k">continue</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="s">&#39;.&#39;</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>
-                <span class="c"># Ignore attribute files created by OS X tar</span>
+            <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="s1">&#39;.&#39;</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+                <span class="c1"># Ignore attribute files created by OS X tar</span>
                 <span class="k">continue</span>
             <span class="n">comm</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
                 <span class="n">Communication</span><span class="p">(),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">extractfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-                <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-            <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span><span class="p">:</span>
+                <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="c1"># hack to keep memory usage O(1)</span>
+            <span class="c1"># (...but the real hack is tarfile :)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">members</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_next_from_zip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span><span class="p">):</span>
@@ -1642,8 +1921,9 @@ TokenLattice instance.</p></div>
         <span class="n">comm</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
             <span class="n">Communication</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zipinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-            <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-        <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+            <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span><span class="p">:</span>
+            <span class="n">add_references_to_communication</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">zipinfo</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
 </pre></div>
 
@@ -1655,12 +1935,13 @@ TokenLattice instance.</p></div>
           <h3>Ancestors (in MRO)</h3>
           <ul class="class_list">
           <li><a href="#concrete.util.file_io.CommunicationReader">CommunicationReader</a></li>
+          <li>__builtin__.object</li>
           </ul>
           <h3>Methods</h3>
             
   <div class="item">
     <div class="name def" id="concrete.util.file_io.CommunicationReader.__init__">
-    <p>def <span class="ident">__init__</span>(</p><p>self, filename)</p>
+    <p>def <span class="ident">__init__</span>(</p><p>self, filename, add_references=True, filetype=0)</p>
     </div>
     
 
@@ -1669,26 +1950,61 @@ TokenLattice instance.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader.__init__', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationReader.__init__" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">add_references</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">filetype</span><span class="o">=</span><span class="n">FileType</span><span class="o">.</span><span class="n">AUTO</span><span class="p">):</span>
+    <span class="n">filetype</span> <span class="o">=</span> <span class="n">FileType</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">filetype</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_add_references</span> <span class="o">=</span> <span class="n">add_references</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_source_filename</span> <span class="o">=</span> <span class="n">filename</span>
-    <span class="k">if</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">is_tarfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-        <span class="c"># File is either a &#39;.tar&#39; or &#39;.tar.gz&#39; file</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;tar&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;zip&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR_GZ</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|gz&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">TAR_BZ2</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|bz2&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">ZIP</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;zip&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;gzip&#39;</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;stream&#39;</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM_GZ</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">STREAM_BZ2</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="n">FileType</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">is_tarfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r|*&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;zip&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zip</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zip_infolist_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gzip&#39;</span><span class="p">:</span>
+            <span class="c1"># this is not a true stream---is_tarfile will have</span>
+            <span class="c1"># successfully seeked backwards on the file if we have</span>
+            <span class="c1"># reached this point</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;bzip2&#39;</span><span class="p">:</span>
+            <span class="c1"># this is not a true stream</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># this is not a true stream</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s1">&#39;stream&#39;</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="s">&#39;stream&#39;</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown filetype </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">filetype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;stream&#39;</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transport</span> <span class="o">=</span> <span class="n">TTransport</span><span class="o">.</span><span class="n">TFileObjectTransport</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">createProtocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
 </pre></div>
 
@@ -1717,7 +2033,7 @@ same value for the <code>filename</code> field.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationReader.next', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationReader.next" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a `(Communication, filename)` tuple</span>
 <span class="sd">    If the CommunicationReader is reading from an archive, then</span>
 <span class="sd">    `filename` will be set to the name of the Communication file in</span>
@@ -1727,11 +2043,11 @@ same value for the <code>filename</code> field.</p></div>
 <span class="sd">    Communications extracted from the concatenated file will have the</span>
 <span class="sd">    same value for the `filename` field.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;stream&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;stream&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_stream</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;tar&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_tar</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="ow">is</span> <span class="s1">&#39;zip&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_from_zip</span><span class="p">()</span>
 </pre></div>
 
@@ -1750,14 +2066,14 @@ same value for the <code>filename</code> field.</p></div>
     <div class="desc"><p>Class for writing one or more Communications to a file</p>
 <hr />
 <p>Sample usage:</p>
-<div class="codehilite"><pre>writer = CommunicationWriter(&#39;foo.concrete&#39;)
+<div class="codehilite"><pre><span></span>writer = CommunicationWriter(&#39;foo.concrete&#39;)
 writer.write(existing_comm_object)
 writer.close()
 </pre></div></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriter', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriter" class="source">
-    <div class="codehilite"><pre><span class="k">class</span> <span class="nc">CommunicationWriter</span><span class="p">:</span>
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">CommunicationWriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a file</span>
 
 <span class="sd">    -----</span>
@@ -1768,15 +2084,27 @@ writer.close()
 <span class="sd">        writer.write(existing_comm_object)</span>
 <span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
-        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
+        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+            <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 
   </div>
@@ -1787,8 +2115,31 @@ writer.close()
           <h3>Ancestors (in MRO)</h3>
           <ul class="class_list">
           <li><a href="#concrete.util.file_io.CommunicationWriter">CommunicationWriter</a></li>
+          <li>__builtin__.object</li>
           </ul>
           <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.file_io.CommunicationWriter.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriter.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriter.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
             
   <div class="item">
     <div class="name def" id="concrete.util.file_io.CommunicationWriter.close">
@@ -1801,7 +2152,7 @@ writer.close()
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriter.close', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriter.close" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 
@@ -1822,8 +2173,8 @@ writer.close()
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriter.open', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriter.open" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1843,8 +2194,9 @@ writer.close()
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriter.write', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriter.write" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
-    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
 </pre></div>
 
@@ -1863,7 +2215,7 @@ writer.close()
     <div class="desc"><p>Class for writing one or more Communications to a .TAR.GZ archive</p>
 <hr />
 <p>Sample usage:</p>
-<div class="codehilite"><pre>writer = CommunicationWriterTGZ(&#39;multiple_comms.tgz&#39;)
+<div class="codehilite"><pre><span></span>writer = CommunicationWriterTGZ(&#39;multiple_comms.tgz&#39;)
 writer.write(comm_object_one, &#39;comm_one.concrete&#39;)
 writer.write(comm_object_two, &#39;comm_two.concrete&#39;)
 writer.write(comm_object_three, &#39;comm_three.concrete&#39;)
@@ -1872,7 +2224,7 @@ writer.close()
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTGZ', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriterTGZ" class="source">
-    <div class="codehilite"><pre><span class="k">class</span> <span class="nc">CommunicationWriterTGZ</span><span class="p">:</span>
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">CommunicationWriterTGZ</span><span class="p">(</span><span class="n">CommunicationWriterTar</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a .TAR.GZ archive</span>
 
 <span class="sd">    -----</span>
@@ -1885,22 +2237,9 @@ writer.close()
 <span class="sd">        writer.write(comm_object_three, &#39;comm_three.concrete&#39;)</span>
 <span class="sd">        writer.close()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s">&#39;w:gz&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="p">):</span>
-        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
-
-        <span class="n">file_like_obj</span> <span class="o">=</span> <span class="n">cStringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
-
-        <span class="n">comm_tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
-        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">comm_filename</span>
-        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">comm_tarinfo</span><span class="p">,</span> <span class="n">file_like_obj</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CommunicationWriterTGZ</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="n">gzip</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1911,21 +2250,67 @@ writer.close()
           <h3>Ancestors (in MRO)</h3>
           <ul class="class_list">
           <li><a href="#concrete.util.file_io.CommunicationWriterTGZ">CommunicationWriterTGZ</a></li>
+          <li><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></li>
+          <li>__builtin__.object</li>
           </ul>
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="concrete.util.file_io.CommunicationWriterTGZ.gzip" class="name">var <span class="ident">gzip</span></p>
+            
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></code>.<code><a href="#concrete.util.file_io.CommunicationWriterTar.gzip">gzip</a></code>
+    </p>
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
           <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.file_io.CommunicationWriterTGZ.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, tar_filename=None)</p>
+    </div>
+    
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></code>.<code><a href="#concrete.util.file_io.CommunicationWriterTar.__init__">__init__</a></code>
+    </p>
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTGZ.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriterTGZ.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">CommunicationWriterTGZ</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="n">gzip</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
             
   <div class="item">
     <div class="name def" id="concrete.util.file_io.CommunicationWriterTGZ.close">
     <p>def <span class="ident">close</span>(</p><p>self)</p>
     </div>
     
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></code>.<code><a href="#concrete.util.file_io.CommunicationWriterTar.close">close</a></code>
+    </p>
 
     
   
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTGZ.close', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriterTGZ.close" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 
@@ -1940,14 +2325,18 @@ writer.close()
     <p>def <span class="ident">open</span>(</p><p>self, tar_filename)</p>
     </div>
     
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></code>.<code><a href="#concrete.util.file_io.CommunicationWriterTar.open">open</a></code>
+    </p>
 
     
   
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTGZ.open', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriterTGZ.open" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s">&#39;w:gz&#39;</span><span class="p">)</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s1">&#39;w:gz&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="k">else</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1958,21 +2347,231 @@ writer.close()
             
   <div class="item">
     <div class="name def" id="concrete.util.file_io.CommunicationWriterTGZ.write">
-    <p>def <span class="ident">write</span>(</p><p>self, comm, comm_filename)</p>
+    <p>def <span class="ident">write</span>(</p><p>self, comm, comm_filename=None)</p>
     </div>
     
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></code>.<code><a href="#concrete.util.file_io.CommunicationWriterTar.write">write</a></code>
+    </p>
 
     
   
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTGZ.write', this);">Show source &equiv;</a></p>
   <div id="source-concrete.util.file_io.CommunicationWriterTGZ.write" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="p">):</span>
-    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">TCompactProtocol</span><span class="o">.</span><span class="n">TCompactProtocolFactory</span><span class="p">())</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">comm_filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">comm_filename</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">+</span> <span class="s1">&#39;.concrete&#39;</span>
+    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
     <span class="n">file_like_obj</span> <span class="o">=</span> <span class="n">cStringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
     <span class="n">comm_tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">REGTYPE</span>
     <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">comm_filename</span>
     <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="mo">0644</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uname</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())</span><span class="o">.</span><span class="n">pw_name</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gname</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrgid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">())</span><span class="o">.</span><span class="n">gr_name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">comm_tarinfo</span><span class="p">,</span> <span class="n">file_like_obj</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="concrete.util.file_io.CommunicationWriterTar" class="name">class <span class="ident">CommunicationWriterTar</span></p>
+      
+  
+    <div class="desc"><p>Class for writing one or more Communications to a .TAR archive</p>
+<hr />
+<p>Sample usage:</p>
+<div class="codehilite"><pre><span></span>writer = CommunicationWriterTar(&#39;multiple_comms.tar&#39;)
+writer.write(comm_object_one, &#39;comm_one.concrete&#39;)
+writer.write(comm_object_two, &#39;comm_two.concrete&#39;)
+writer.write(comm_object_three, &#39;comm_three.concrete&#39;)
+writer.close()
+</pre></div></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTar', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriterTar" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">CommunicationWriterTar</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for writing one or more Communications to a .TAR archive</span>
+
+<span class="sd">    -----</span>
+
+<span class="sd">    Sample usage:</span>
+
+<span class="sd">        writer = CommunicationWriterTar(&#39;multiple_comms.tar&#39;)</span>
+<span class="sd">        writer.write(comm_object_one, &#39;comm_one.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_two, &#39;comm_two.concrete&#39;)</span>
+<span class="sd">        writer.write(comm_object_three, &#39;comm_three.concrete&#39;)</span>
+<span class="sd">        writer.close()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">gzip</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="o">=</span> <span class="n">gzip</span>
+        <span class="k">if</span> <span class="n">tar_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s1">&#39;w:gz&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="k">else</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">comm_filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">comm_filename</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">+</span> <span class="s1">&#39;.concrete&#39;</span>
+
+        <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+            <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+
+        <span class="n">file_like_obj</span> <span class="o">=</span> <span class="n">cStringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+
+        <span class="n">comm_tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">REGTYPE</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">comm_filename</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="mo">0644</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uname</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())</span><span class="o">.</span><span class="n">pw_name</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">()</span>
+        <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gname</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrgid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">())</span><span class="o">.</span><span class="n">gr_name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">comm_tarinfo</span><span class="p">,</span> <span class="n">file_like_obj</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#concrete.util.file_io.CommunicationWriterTar">CommunicationWriterTar</a></li>
+          <li>__builtin__.object</li>
+          </ul>
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="concrete.util.file_io.CommunicationWriterTar.gzip" class="name">var <span class="ident">gzip</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.file_io.CommunicationWriterTar.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, tar_filename=None, gzip=False)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTar.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriterTar.__init__" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">gzip</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="o">=</span> <span class="n">gzip</span>
+    <span class="k">if</span> <span class="n">tar_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.file_io.CommunicationWriterTar.close">
+    <p>def <span class="ident">close</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTar.close', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriterTar.close" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.file_io.CommunicationWriterTar.open">
+    <p>def <span class="ident">open</span>(</p><p>self, tar_filename)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTar.open', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriterTar.open" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_filename</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_filename</span><span class="p">,</span> <span class="s1">&#39;w:gz&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gzip</span> <span class="k">else</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="concrete.util.file_io.CommunicationWriterTar.write">
+    <p>def <span class="ident">write</span>(</p><p>self, comm, comm_filename=None)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-concrete.util.file_io.CommunicationWriterTar.write', this);">Show source &equiv;</a></p>
+  <div id="source-concrete.util.file_io.CommunicationWriterTar.write" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">comm_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">comm_filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">comm_filename</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuidString</span> <span class="o">+</span> <span class="s1">&#39;.concrete&#39;</span>
+    <span class="n">thrift_bytes</span> <span class="o">=</span> <span class="n">TSerialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+        <span class="n">comm</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="n">factory</span><span class="o">.</span><span class="n">protocolFactory</span><span class="p">)</span>
+    <span class="n">file_like_obj</span> <span class="o">=</span> <span class="n">cStringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+    <span class="n">comm_tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">REGTYPE</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">comm_filename</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thrift_bytes</span><span class="p">)</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="mo">0644</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">uname</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())</span><span class="o">.</span><span class="n">pw_name</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">()</span>
+    <span class="n">comm_tarinfo</span><span class="o">.</span><span class="n">gname</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrgid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getgid</span><span class="p">())</span><span class="o">.</span><span class="n">gr_name</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">tarfile</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">comm_tarinfo</span><span class="p">,</span> <span class="n">file_like_obj</span><span class="p">)</span>
 </pre></div>
 
@@ -1991,7 +2590,7 @@ writer.close()
   <footer id="footer">
     <p>
       Documentation generated by
-      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.1</a>
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
     </p>
 
     <p>pdoc is in the public domain with the
